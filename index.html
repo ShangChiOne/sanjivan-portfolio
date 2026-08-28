@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sanjivan Thiyageswaran — Portfolio</title>
+<meta name="description" content="Sanjivan Thiyageswaran — BSc Computer Science (AI) student at APU, open to full-time roles. Machine learning, mobile apps, and software projects.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💻</text></svg>">
+<script>
+(function () {
+  var saved = localStorage.getItem('theme');
+  var theme = saved || 'dark';
+  document.documentElement.setAttribute('data-theme', theme);
+})();
+</script>
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<div class="scroll-progress" id="scrollProgress"></div>
+
+<header class="site-header" id="top">
+  <div class="wrap header-inner">
+    <a class="logo" href="#top">Sanjivan<span class="dot">.</span></a>
+
+    <nav class="nav-links" id="navLinks">
+      <a href="#about">About</a>
+      <a href="#projects">Projects</a>
+      <a href="#contact">Contact</a>
+      <a class="nav-cta" href="#contact">Say hello</a>
+    </nav>
+
+    <div class="header-actions">
+      <button class="cmdk-trigger" id="cmdkTrigger" aria-label="Open command palette (Ctrl+K)">
+        <svg viewBox="0 0 24 24"><path d="M10 4a6 6 0 1 0 3.8 10.6l4.3 4.3 1.4-1.4-4.3-4.3A6 6 0 0 0 10 4Zm-4 6a4 4 0 0 1 8 0 4 4 0 0 1-8 0Z"/></svg>
+        <span>Quick nav</span>
+        <kbd>Ctrl K</kbd>
+      </button>
+
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+        <svg class="icon-sun" viewBox="0 0 24 24"><path d="M12 4a1 1 0 0 1-1-1V1a1 1 0 1 1 2 0v2a1 1 0 0 1-1 1Zm0 18a1 1 0 0 1-1-1v-2a1 1 0 1 1 2 0v2a1 1 0 0 1-1 1ZM4.22 5.64a1 1 0 0 1-1.41 0L1.4 4.22a1 1 0 1 1 1.41-1.41L4.22 4.22a1 1 0 0 1 0 1.42Zm14.16 14.14a1 1 0 0 1-1.41 0l-1.41-1.41a1 1 0 0 1 1.41-1.41l1.41 1.41a1 1 0 0 1 0 1.41ZM3 13H1a1 1 0 1 1 0-2h2a1 1 0 1 1 0 2Zm20 0h-2a1 1 0 1 1 0-2h2a1 1 0 1 1 0 2ZM4.22 18.36a1 1 0 0 1 0-1.41l1.41-1.41a1 1 0 1 1 1.41 1.41l-1.41 1.41a1 1 0 0 1-1.41 0ZM18.38 4.22a1 1 0 0 1 0 1.42l-1.41 1.41a1 1 0 1 1-1.41-1.41l1.41-1.42a1 1 0 0 1 1.41 0ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Z"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24"><path d="M20.7 14.9A9 9 0 1 1 9.1 3.3a1 1 0 0 1 1.09 1.51A7 7 0 0 0 19.2 13.8a1 1 0 0 1 1.5 1.1Z"/></svg>
+      </button>
+
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- HERO -->
+  <section class="hero wrap">
+    <div class="hero-spotlight" aria-hidden="true"></div>
+    <div class="hero-text">
+      <p class="eyebrow">Open to full-time opportunities</p>
+      <h1>Sanjivan Thiyageswaran</h1>
+      <p class="hero-sub">BSc Computer Science (AI) student at APU, building intelligent
+        systems and creative digital experiences — from ML models that price insurance
+        to full-scale games and mobile apps.</p>
+      <div class="hero-actions">
+        <a href="#projects" class="btn btn-primary">View my work</a>
+        <a href="#contact" class="btn btn-ghost">Get in touch</a>
+      </div>
+      <ul class="social-row" aria-label="Social links">
+        <li><a href="https://linkedin.com/in/sanjivan-thiyageswaran-660641279" target="_blank" rel="noopener" aria-label="LinkedIn">
+          <svg viewBox="0 0 24 24"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM3 9h4v12H3V9Zm7 0h3.8v1.7h.05c.53-1 1.83-2.05 3.77-2.05 4.03 0 4.78 2.65 4.78 6.1V21h-4v-5.5c0-1.3-.02-3-1.83-3-1.83 0-2.1 1.43-2.1 2.9V21h-4V9Z"/></svg>
+        </a></li>
+        <li><a href="https://github.com/ShangChiOne" target="_blank" rel="noopener" aria-label="GitHub">
+          <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.46-1.15-1.11-1.46-1.11-1.46-.9-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.4 9.4 0 0 1 5 0c1.9-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>
+        </a></li>
+        <li><a href="https://www.youtube.com/@Artifiicial_World" target="_blank" rel="noopener" aria-label="YouTube">
+          <svg viewBox="0 0 24 24"><path d="M22 8.4s-.2-1.55-.82-2.23c-.78-.87-1.66-.87-2.06-.92C16.24 5 12 5 12 5h-.01s-4.24 0-7.11.25c-.4.05-1.28.05-2.06.92C2.2 6.85 2 8.4 2 8.4S1.8 10.2 1.8 12v1.6c0 1.8.2 3.6.2 3.6s.2 1.55.82 2.23c.78.87 1.8.84 2.26.93 1.64.17 6.92.25 6.92.25s4.25-.01 7.12-.26c.4-.05 1.28-.05 2.06-.92.62-.68.82-2.23.82-2.23s.2-1.8.2-3.6V12c0-1.8-.2-3.6-.2-3.6ZM9.98 15.4V8.6l6.3 3.4-6.3 3.4Z"/></svg>
+        </a></li>
+        <li><a href="mailto:sanjivanthiyages@gmail.com" aria-label="Email">
+          <svg viewBox="0 0 24 24"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm9 7.2L4.2 6.8v.6L12 13l7.8-5.6v-.6L12 12.2Z"/></svg>
+        </a></li>
+      </ul>
+    </div>
+
+    <div class="hero-photo">
+      <img src="assets/images/profile.jpg" alt="Portrait of Sanjivan Thiyageswaran" width="360" height="360" loading="eager">
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section class="about wrap" id="about">
+    <h2 class="section-title">About</h2>
+    <p class="about-text">
+      I'm a Computer Science (AI) undergraduate at Asia Pacific University, currently looking
+      for a full-time role. I like taking a problem — a budget that's hard to track, a premium
+      that's hard to price, a fight scene that needs pixel-perfect timing — and turning it into
+      something that actually runs. I work across machine learning, mobile app development, and
+      software engineering, and I'm most interested in roles where I can keep doing exactly that.
+    </p>
+    <ul class="skills" aria-label="Skills">
+      <li>Python</li><li>Machine Learning</li><li>Flutter &amp; Dart</li><li>Firebase</li>
+      <li>Java (OOP)</li><li>R</li><li>Pygame</li><li>Web Development</li><li>SQL</li>
+      <li>PyTorch</li><li>MySQL</li>
+    </ul>
+  </section>
+
+  <!-- PROJECTS -->
+  <section class="projects wrap" id="projects">
+    <h2 class="section-title">Projects</h2>
+    <p class="section-sub">A mix of shipped apps, ML experiments, and games.</p>
+
+    <article class="featured-project">
+      <div class="featured-media">
+        <button class="card-media fyp-video" data-video="Mxa8zl6f2co" aria-label="Play full ForecastIQ walkthrough video">
+          <img src="https://img.youtube.com/vi/Mxa8zl6f2co/maxresdefault.jpg" alt="ForecastIQ walkthrough video thumbnail"
+               loading="lazy" onerror="this.onerror=null;this.src='https://img.youtube.com/vi/Mxa8zl6f2co/hqdefault.jpg';">
+          <span class="play-badge">▶ Watch full walkthrough</span>
+        </button>
+      </div>
+
+      <div class="featured-body">
+        <span class="tag tag-featured">Final Year Project</span>
+        <h3>ForecastIQ — AI-Based Food Demand Forecasting</h3>
+        <p>A full-stack Flask web app that lets restaurant operators upload historical
+          sales data and get ML-powered weekly demand forecasts (1/4/8/12-week horizons),
+          recommended prep quantities with an adjustable safety buffer, trend dashboards,
+          manual overrides, and CSV export. It also ships a chat assistant for querying
+          the forecasts — its answers are grounded in the exact same computed data as the
+          charts, so the narrative can never contradict what's plotted.</p>
+
+        <ul class="featured-stats">
+          <li><strong data-count="73.22" data-decimals="2">0</strong><span>XGBoost MAE</span></li>
+          <li><strong data-count="456" data-suffix="K+">0</strong><span>training records</span></li>
+          <li><strong data-count="77,51">0 / 0</strong><span>centers / menu items</span></li>
+        </ul>
+
+        <ul class="stack-row" aria-label="Tech stack">
+          <li>Flask</li><li>XGBoost</li><li>Random Forest</li><li>LSTM · PyTorch</li>
+          <li>MySQL</li><li>Flask-Login</li><li>Pytest</li>
+        </ul>
+      </div>
+    </article>
+
+    <h3 class="grid-label">More projects</h3>
+    <div class="project-grid">
+
+      <article class="card">
+        <button class="card-media" data-video="xWy3kV8HGRc" aria-label="Play SavePlus+ demo video">
+          <img src="assets/images/saveplus.jpg" alt="SavePlus+ app icon" loading="lazy">
+          <span class="play-badge">▶ Watch demo</span>
+        </button>
+        <div class="card-body">
+          <span class="tag">Flutter · Firebase</span>
+          <h3>SavePlus+</h3>
+          <p>A mobile budgeting app that helps users track spending in real time and see
+            progress against savings goals, with analytics backed by Firebase.</p>
+        </div>
+      </article>
+
+      <article class="card">
+        <button class="card-media" data-video="8JN9GsUkDZY" aria-label="Play Dragon's Ring demo video">
+          <img src="assets/images/dragons-ring.jpg" alt="Dragon's Ring Kickboxing Tournament title screen" loading="lazy">
+          <span class="play-badge">▶ Watch demo</span>
+        </button>
+        <div class="card-body">
+          <span class="tag">Python · Pygame</span>
+          <h3>Dragon's Ring Kickboxing Tournament</h3>
+          <p>A full story-based retro 2D fighting game built from scratch in Python using
+            Pygame, with custom sprites, animation, and a story mode.</p>
+        </div>
+      </article>
+
+      <article class="card">
+        <button class="card-media" data-video="55Ilrxh57JY" aria-label="Play Insurance Premium Prediction demo video">
+          <img src="assets/images/insurance-chart.jpg" alt="Actual vs predicted insurance charges scatter plot" loading="lazy">
+          <span class="play-badge">▶ Watch demo</span>
+        </button>
+        <div class="card-body">
+          <span class="tag">Python · Machine Learning</span>
+          <h3>Insurance Premium Prediction</h3>
+          <p>Applied regression techniques to a real-world insurance dataset to predict
+            premium charges from customer attributes.</p>
+        </div>
+      </article>
+
+      <article class="card">
+        <a class="card-media card-media-link" href="https://thiyagesco.com" target="_blank" rel="noopener" aria-label="Open Thiyages & Co website">
+          <img src="assets/images/thiyagesco.jpg" alt="Thiyages & Co Law Firm website homepage" loading="lazy">
+          <span class="play-badge">↗ Visit site</span>
+        </a>
+        <div class="card-body">
+          <span class="tag">Web Development</span>
+          <h3>Thiyages &amp; Co Law Firm</h3>
+          <p>Built and hosted a complete website for a legal practice, live at
+            <a href="https://thiyagesco.com" target="_blank" rel="noopener">thiyagesco.com</a>.</p>
+        </div>
+      </article>
+
+      <article class="card">
+        <span class="card-media">
+          <img src="assets/images/credit-risk.jpg" alt="Risk assessment illustration for the Credit Risk Classification project" loading="lazy">
+        </span>
+        <div class="card-body">
+          <span class="tag">R</span>
+          <h3>Credit Risk Classification</h3>
+          <p>A data analysis pipeline in R that scores credit risk from applicant data,
+            covering cleaning, feature prep, and classification.</p>
+        </div>
+      </article>
+
+      <article class="card">
+        <span class="card-media">
+          <img src="assets/images/pots.jpg" alt="Code editor showing a software project, representing the POTS system" loading="lazy">
+        </span>
+        <div class="card-body">
+          <span class="tag">Java · OOP</span>
+          <h3>POTS</h3>
+          <p>A procurement tracking system designed around object-oriented principles,
+            modelling orders, suppliers, and stock end to end.</p>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section class="contact wrap" id="contact">
+    <h2 class="section-title">Contact</h2>
+    <p class="section-sub">Looking for someone who can pick things up fast? Let's talk.</p>
+
+    <div class="contact-grid">
+      <div class="contact-item contact-item-email">
+        <a class="contact-item-main" href="mailto:sanjivanthiyages@gmail.com">
+          <svg viewBox="0 0 24 24"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm9 7.2L4.2 6.8v.6L12 13l7.8-5.6v-.6L12 12.2Z"/></svg>
+          <span>sanjivanthiyages@gmail.com</span>
+        </a>
+        <button class="copy-btn" data-copy="sanjivanthiyages@gmail.com" aria-label="Copy email address">
+          <svg viewBox="0 0 24 24"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1Zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Zm0 16H8V7h11v14Z"/></svg>
+        </button>
+      </div>
+      <a class="contact-item" href="tel:+60122893154">
+        <svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.7 3.6 4.9 6.3 6.3l2.1-2.1c.3-.3.7-.4 1-.2 1.1.4 2.4.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.9 21 3 13.1 3 3.6 3 3 3.4 2.6 4 2.6h3.6c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.2 1L6.6 10.8Z"/></svg>
+        <span>+60 12-289 3154</span>
+      </a>
+      <a class="contact-item" href="https://linkedin.com/in/sanjivan-thiyageswaran-660641279" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM3 9h4v12H3V9Zm7 0h3.8v1.7h.05c.53-1 1.83-2.05 3.77-2.05 4.03 0 4.78 2.65 4.78 6.1V21h-4v-5.5c0-1.3-.02-3-1.83-3-1.83 0-2.1 1.43-2.1 2.9V21h-4V9Z"/></svg>
+        <span>linkedin.com/in/sanjivan-thiyageswaran</span>
+      </a>
+      <a class="contact-item" href="https://github.com/ShangChiOne" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.46-1.15-1.11-1.46-1.11-1.46-.9-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.4 9.4 0 0 1 5 0c1.9-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>
+        <span>github.com/ShangChiOne</span>
+      </a>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <p>&copy; <span id="year"></span> Sanjivan Thiyageswaran</p>
+    <a href="#top">Back to top ↑</a>
+  </div>
+</footer>
+
+<!-- Video modal -->
+<div class="video-modal" id="videoModal" hidden>
+  <div class="video-modal-backdrop" data-close></div>
+  <div class="video-modal-box">
+    <button class="video-modal-close" data-close aria-label="Close video">✕</button>
+    <div class="video-modal-frame" id="videoModalFrame"></div>
+  </div>
+</div>
+
+<!-- Command palette -->
+<div class="cmdk-overlay" id="cmdk" hidden>
+  <div class="cmdk-backdrop" data-close-cmdk></div>
+  <div class="cmdk-box" role="dialog" aria-modal="true" aria-label="Command palette">
+    <div class="cmdk-input-row">
+      <svg viewBox="0 0 24 24"><path d="M10 4a6 6 0 1 0 3.8 10.6l4.3 4.3 1.4-1.4-4.3-4.3A6 6 0 0 0 10 4Zm-4 6a4 4 0 0 1 8 0 4 4 0 0 1-8 0Z"/></svg>
+      <input type="text" id="cmdkInput" placeholder="Jump to a section, project, or link…" autocomplete="off" spellcheck="false">
+      <kbd>Esc</kbd>
+    </div>
+    <ul class="cmdk-list" id="cmdkList"></ul>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+# FYP project — large/generated artifacts, keep out of the portfolio repo
+FYP Project - TP070073/models/
+FYP Project - TP070073/dataset/
+FYP Project - TP070073/app/__pycache__/
+FYP Project - TP070073/.env
+FYP Project - TP070073/*.db
+
+__pycache__/
+*.pyc
+.env
+
+# Raw source recording — the site embeds the YouTube upload instead
+*.mp4
+
+# Raw source images dropped at the repo root — compressed copies live in assets/images/
+/*.jpg
+/*.jpeg
+/*.png

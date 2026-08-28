@@ -1,0 +1,3354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForecastIQ — Food Demand Forecasting</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --bg:          #060810;
+            --surface:     #0b0d17;
+            --surface-2:   #10131f;
+            --surface-3:   #181b2a;
+            --border:      rgba(255,255,255,0.07);
+            --border-soft: rgba(255,255,255,0.04);
+            --accent:      #00e5b0;
+            --accent-dim:  rgba(0,229,176,0.08);
+            --accent-glow: rgba(0,229,176,0.25);
+            --purple:      #7c6aff;
+            --purple-dim:  rgba(124,106,255,0.08);
+            --purple-glow: rgba(124,106,255,0.25);
+            --pink:        #e064f7;
+            --pink-dim:    rgba(224,100,247,0.07);
+            --pink-glow:   rgba(224,100,247,0.22);
+            --amber:       #f5a623;
+            --amber-dim:   rgba(245,166,35,0.07);
+            --amber-glow:  rgba(245,166,35,0.22);
+            --text:        #e0e8f5;
+            --text-soft:   #a0aec0;
+            --text-muted:  #6b7d9e;
+            --danger:      #ff4d6a;
+            --danger-dim:  rgba(255,77,106,0.09);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            background-image:
+                radial-gradient(circle, rgba(255,255,255,0.022) 1px, transparent 1px);
+            background-size: 28px 28px;
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
+            font-weight: 400;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ── Animated ambient orbs ── */
+        @keyframes orb1 {
+            0%,100% { transform: translate(0,0) scale(1); }
+            33%      { transform: translate(60px,-90px) scale(1.1); }
+            66%      { transform: translate(-30px,45px) scale(0.93); }
+        }
+        @keyframes orb2 {
+            0%,100% { transform: translate(0,0) scale(1); }
+            33%      { transform: translate(-70px,55px) scale(1.08); }
+            66%      { transform: translate(40px,-65px) scale(1.12); }
+        }
+        @keyframes orb3 {
+            0%,100% { transform: translate(-50%,-50%) scale(1); opacity:.5; }
+            50%      { transform: translate(-50%,-50%) scale(1.18); opacity:.9; }
+        }
+        .orb { position: fixed; pointer-events: none; z-index: 0; border-radius: 50%; }
+        .orb-1 {
+            top: -350px; right: -350px; width: 860px; height: 860px;
+            background: radial-gradient(circle, rgba(0,229,176,0.08) 0%, transparent 65%);
+            animation: orb1 22s ease-in-out infinite;
+        }
+        .orb-2 {
+            bottom: -350px; left: -350px; width: 860px; height: 860px;
+            background: radial-gradient(circle, rgba(124,106,255,0.08) 0%, transparent 65%);
+            animation: orb2 28s ease-in-out infinite;
+        }
+        .orb-3 {
+            top: 40%; left: 50%; width: 750px; height: 750px;
+            background: radial-gradient(circle, rgba(224,100,247,0.03) 0%, transparent 65%);
+            animation: orb3 34s ease-in-out infinite;
+        }
+
+        /* ── Cursor glow ── */
+        .cursor-glow {
+            position: fixed; pointer-events: none; z-index: 9999;
+            width: 340px; height: 340px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(0,229,176,0.05) 0%, transparent 65%);
+            transform: translate(-50%,-50%);
+            transition: opacity .4s; opacity: 0;
+            will-change: left, top;
+        }
+
+        /* ── Page load animations ── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+        .anim-1 { animation: fadeUp .6s cubic-bezier(.16,1,.3,1) .05s both; }
+        .anim-2 { animation: fadeUp .6s cubic-bezier(.16,1,.3,1) .15s both; }
+        .anim-3 { animation: fadeUp .6s cubic-bezier(.16,1,.3,1) .25s both; }
+        .anim-4 { animation: fadeUp .6s cubic-bezier(.16,1,.3,1) .35s both; }
+
+        /* ── Navbar ── */
+        nav.topnav {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(6,8,16,0.75);
+            backdrop-filter: blur(24px) saturate(1.7);
+            -webkit-backdrop-filter: blur(24px) saturate(1.7);
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 1px 0 rgba(0,229,176,0.09), 0 8px 32px rgba(0,0,0,0.5);
+            padding: 14px 36px;
+            display: flex; align-items: center; gap: 16px;
+            animation: fadeIn .5s ease both;
+        }
+        @keyframes brand-shimmer {
+            0%   { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+        .brand {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.2rem; font-weight: 800;
+            letter-spacing: 3px; text-transform: uppercase;
+            background: linear-gradient(90deg, var(--accent) 0%, #00c8ff 28%, var(--accent) 55%, #00ffcc 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-decoration: none; flex: 1;
+            animation: brand-shimmer 4s linear infinite;
+        }
+        .brand i { -webkit-text-fill-color: var(--accent); }
+        .nav-sub {
+            font-size: .72rem; letter-spacing: 2px; text-transform: uppercase;
+            color: var(--text-muted); font-weight: 500;
+        }
+        .btn-nav {
+            background: var(--surface-2); border: 1px solid var(--border);
+            color: var(--text-soft); font-family: 'Outfit', sans-serif;
+            font-size: .8rem; font-weight: 500;
+            padding: 7px 18px; border-radius: 9px; cursor: pointer;
+            position: relative; overflow: hidden;
+            transition: border-color .25s, color .25s, box-shadow .25s, transform .2s;
+        }
+        .btn-nav:hover {
+            border-color: var(--accent); color: var(--accent);
+            box-shadow: 0 0 18px var(--accent-glow);
+            transform: translateY(-1px);
+        }
+
+        /* ── Page wrapper ── */
+        .page { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto; padding: 52px 24px 96px; }
+
+        /* ── Buttons ── */
+        @keyframes btn-shimmer {
+            0%   { left: -65%; }
+            100% { left: 135%; }
+        }
+        @keyframes ripple-out {
+            from { transform: scale(0); opacity: .45; }
+            to   { transform: scale(4); opacity: 0; }
+        }
+        .ripple-el {
+            position: absolute; border-radius: 50%; pointer-events: none;
+            background: rgba(255,255,255,0.22);
+            animation: ripple-out 0.55s linear forwards;
+        }
+
+        .btn-accent {
+            background: linear-gradient(135deg, var(--accent) 0%, #00ccaa 100%);
+            color: #060810;
+            font-family: 'Outfit', sans-serif; font-weight: 700; font-size: .85rem;
+            border: none; padding: 10px 22px; border-radius: 10px;
+            cursor: pointer; transition: box-shadow .3s, transform .2s;
+            display: inline-flex; align-items: center; gap: 7px;
+            position: relative; overflow: hidden; isolation: isolate;
+        }
+        .btn-accent::before {
+            content: '';
+            position: absolute; top: 0; width: 45%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent);
+            left: -65%; animation: btn-shimmer 2.6s ease-in-out infinite;
+            pointer-events: none;
+        }
+        .btn-accent:hover { box-shadow: 0 0 34px var(--accent-glow), 0 0 68px rgba(0,229,176,0.1); transform: translateY(-2px); }
+        .btn-accent:active { transform: translateY(0); }
+
+        .btn-ghost {
+            background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+            color: var(--text-soft); font-family: 'Outfit', sans-serif;
+            font-size: .85rem; font-weight: 500;
+            padding: 9px 20px; border-radius: 10px; cursor: pointer;
+            transition: all .25s;
+            display: inline-flex; align-items: center; gap: 7px;
+            position: relative; overflow: hidden;
+        }
+        .btn-ghost:hover {
+            border-color: var(--accent); color: var(--accent);
+            box-shadow: 0 0 24px var(--accent-glow), inset 0 0 24px rgba(0,229,176,0.03);
+            background: rgba(0,229,176,0.05); transform: translateY(-1px);
+        }
+        .btn-ghost:active { transform: translateY(0); }
+
+        .btn-danger-ghost {
+            background: transparent; border: 1px solid rgba(255,77,106,0.35);
+            color: var(--danger); font-family: 'Outfit', sans-serif;
+            font-size: .8rem; font-weight: 500; padding: 7px 15px;
+            border-radius: 9px; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 6px;
+            transition: box-shadow .25s, background .25s, transform .2s;
+        }
+        .btn-danger-ghost:hover {
+            box-shadow: 0 0 20px rgba(255,77,106,0.28);
+            background: rgba(255,77,106,0.06); transform: translateY(-1px);
+        }
+
+        /* ── Card ── */
+        .card-dark {
+            background: linear-gradient(155deg, var(--surface) 0%, rgba(8,10,18,0.97) 100%);
+            border: 1px solid var(--border);
+            border-radius: 20px; padding: 30px;
+            position: relative;
+            box-shadow: 0 4px 36px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.045);
+            transition: border-color .35s, box-shadow .4s;
+        }
+        .card-dark:hover {
+            border-color: rgba(0,229,176,0.2);
+            box-shadow: 0 8px 52px rgba(0,0,0,0.45), 0 0 0 1px rgba(0,229,176,0.07), inset 0 1px 0 rgba(255,255,255,0.06);
+        }
+
+        /* ── Upload zone ── */
+        @keyframes pulse-border {
+            0%, 100% {
+                border-color: rgba(0,229,176,.2);
+                box-shadow: 0 0 0 0 rgba(0,229,176,0), inset 0 0 20px rgba(0,229,176,0);
+            }
+            50% {
+                border-color: rgba(0,229,176,.48);
+                box-shadow: 0 0 32px 4px rgba(0,229,176,.07), inset 0 0 44px rgba(0,229,176,.045);
+            }
+        }
+        @keyframes icon-float {
+            0%,100% { transform: translateY(0); filter: drop-shadow(0 0 10px rgba(0,229,176,0.35)); }
+            50%      { transform: translateY(-9px); filter: drop-shadow(0 0 20px rgba(0,229,176,0.65)); }
+        }
+        .upload-zone {
+            border: 2px dashed rgba(0,229,176,.22);
+            border-radius: 16px; padding: 58px 28px;
+            text-align: center; cursor: pointer;
+            background: radial-gradient(ellipse at center 85%, rgba(0,229,176,0.045) 0%, transparent 65%);
+            animation: pulse-border 3.5s ease-in-out infinite;
+            transition: border-color .25s, background .25s, box-shadow .35s;
+        }
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--accent); border-style: solid;
+            background: radial-gradient(ellipse at center, rgba(0,229,176,.1) 0%, transparent 65%);
+            box-shadow: 0 0 50px rgba(0,229,176,.13), inset 0 0 50px rgba(0,229,176,.04);
+            animation: none;
+        }
+        .upload-zone .uz-icon {
+            font-size: 2.8rem; color: var(--accent); display: block; margin-bottom: 16px;
+            animation: icon-float 3s ease-in-out infinite;
+        }
+        .upload-zone:hover .uz-icon, .upload-zone.dragover .uz-icon { animation: none; }
+        .upload-zone .uz-title {
+            font-family: 'Syne', sans-serif; font-size: 1.08rem; font-weight: 700;
+            color: var(--text); margin-bottom: 6px; letter-spacing: .3px;
+        }
+        .upload-zone .uz-sub { font-size: .82rem; color: var(--text-muted); margin-bottom: 20px; }
+
+        /* ── Toggle buttons ── */
+        .toggles { display: flex; gap: 8px; flex-wrap: wrap; }
+        .toggles input[type="radio"] { display: none; }
+        .toggles label {
+            background: var(--surface-2); border: 1px solid var(--border);
+            color: var(--text-soft); font-size: .82rem; font-weight: 500;
+            padding: 7px 18px; border-radius: 9px; cursor: pointer;
+            transition: all .2s; user-select: none;
+        }
+        .toggles input:checked + label {
+            background: linear-gradient(135deg, var(--accent) 0%, #00c8a0 100%);
+            border-color: var(--accent); color: #060810; font-weight: 700;
+            box-shadow: 0 0 20px var(--accent-glow), 0 2px 10px rgba(0,229,176,0.18);
+        }
+        .toggles label:hover { border-color: var(--accent); color: var(--accent); }
+        .toggles input:checked + label:hover { color: #060810; }
+
+        /* ── Field label ── */
+        .field-label {
+            font-size: .7rem; font-weight: 600; letter-spacing: 1.8px;
+            text-transform: uppercase; color: var(--text);
+            margin-bottom: 11px; display: block;
+        }
+
+        /* ── Progress bar ── */
+        .progress-wrap { display: none; padding: 24px 0 8px; }
+        .progress-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px;
+        }
+        .progress-stage-label { font-size: .88rem; font-weight: 500; color: var(--text); }
+        .progress-time-label  { font-size: .78rem; color: var(--text-muted); }
+        .progress-track {
+            height: 7px; background: var(--surface-3);
+            border-radius: 99px; overflow: hidden; margin-bottom: 6px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,.5);
+        }
+        @keyframes progress-flow {
+            0%   { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), #00c8ff, var(--purple), var(--accent));
+            background-size: 200% 100%;
+            border-radius: 99px; width: 0%;
+            transition: width .12s ease;
+            box-shadow: 0 0 18px var(--accent-glow), 0 0 36px rgba(0,229,176,0.1);
+            animation: progress-flow 2s linear infinite;
+        }
+        .progress-pct { font-size: .72rem; color: var(--text-muted); text-align: right; }
+
+        /* ── Error ── */
+        .alert-error {
+            background: var(--danger-dim); border: 1px solid rgba(255,77,106,.22);
+            border-radius: 11px; padding: 14px 16px; color: #ff8096;
+            font-size: .88rem; display: none; margin-top: 16px;
+        }
+        .alert-error.visible { display: block; }
+
+        /* ── Divider ── */
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent);
+            margin: 22px 0;
+        }
+
+        /* ── Section header ── */
+        .section-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 30px; flex-wrap: wrap; gap: 14px;
+        }
+        .section-header h2 {
+            font-family: 'Syne', sans-serif; font-size: 1.75rem;
+            font-weight: 800; color: var(--text); letter-spacing: -.3px;
+        }
+
+        /* ── Stat grid ── */
+        .stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 24px; }
+        @media (max-width: 760px) { .stat-grid { grid-template-columns: repeat(2,1fr); } }
+
+        .stat-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 16px; padding: 24px 22px 22px;
+            position: relative; overflow: hidden;
+            transition: transform .35s cubic-bezier(.16,1,.3,1), box-shadow .4s, border-color .3s;
+            cursor: default;
+        }
+        /* Colored top accent bar per card */
+        .stat-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0;
+            height: 2px; border-radius: 16px 16px 0 0;
+        }
+        .stat-card:nth-child(1)::before { background: linear-gradient(90deg, var(--accent) 0%, transparent 80%); }
+        .stat-card:nth-child(2)::before { background: linear-gradient(90deg, var(--purple) 0%, transparent 80%); }
+        .stat-card:nth-child(3)::before { background: linear-gradient(90deg, var(--pink) 0%, transparent 80%); }
+        .stat-card:nth-child(4)::before { background: linear-gradient(90deg, var(--amber) 0%, transparent 80%); }
+        /* Inner corner glow */
+        .stat-card::after {
+            content: ''; position: absolute;
+            bottom: -30px; left: -10px;
+            width: 120px; height: 120px; border-radius: 50%;
+            opacity: 0; transition: opacity .4s, transform .4s;
+            transform: scale(0.7);
+        }
+        .stat-card:nth-child(1)::after { background: radial-gradient(circle, rgba(0,229,176,0.13), transparent 70%); }
+        .stat-card:nth-child(2)::after { background: radial-gradient(circle, rgba(124,106,255,0.13), transparent 70%); }
+        .stat-card:nth-child(3)::after { background: radial-gradient(circle, rgba(224,100,247,0.13), transparent 70%); }
+        .stat-card:nth-child(4)::after { background: radial-gradient(circle, rgba(245,166,35,0.13), transparent 70%); }
+        .stat-card:hover::after { opacity: 1; transform: scale(1); }
+        .stat-card:nth-child(1):hover { border-color: rgba(0,229,176,0.22); box-shadow: 0 8px 36px rgba(0,229,176,0.09); }
+        .stat-card:nth-child(2):hover { border-color: rgba(124,106,255,0.22); box-shadow: 0 8px 36px rgba(124,106,255,0.09); }
+        .stat-card:nth-child(3):hover { border-color: rgba(224,100,247,0.22); box-shadow: 0 8px 36px rgba(224,100,247,0.09); }
+        .stat-card:nth-child(4):hover { border-color: rgba(245,166,35,0.22); box-shadow: 0 8px 36px rgba(245,166,35,0.09); }
+        .stat-card .s-label {
+            font-size: .66rem; font-weight: 600; letter-spacing: 1.8px;
+            text-transform: uppercase; color: var(--text-soft); margin-bottom: 12px;
+        }
+        .stat-card .s-value {
+            font-family: 'Syne', sans-serif; font-size: 2.2rem;
+            font-weight: 800; line-height: 1;
+        }
+        .stat-card:nth-child(1) .s-value { color: var(--accent); text-shadow: 0 0 24px rgba(0,229,176,0.4); }
+        .stat-card:nth-child(2) .s-value { color: var(--purple); text-shadow: 0 0 24px rgba(124,106,255,0.4); }
+        .stat-card:nth-child(3) .s-value { color: var(--pink);   text-shadow: 0 0 24px rgba(224,100,247,0.4); }
+        .stat-card:nth-child(4) .s-value { color: var(--amber);  text-shadow: 0 0 24px rgba(245,166,35,0.4); }
+
+        /* ── Chart grid ── */
+        .chart-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 20px; }
+        @media (max-width: 880px) { .chart-grid { grid-template-columns: 1fr; } }
+
+        .chart-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 16px; padding: 24px;
+            position: relative; overflow: hidden;
+            transition: border-color .3s, box-shadow .4s;
+        }
+        .chart-card::before {
+            content: ''; position: absolute;
+            top: 0; left: 15%; right: 15%; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0,229,176,0.38), rgba(124,106,255,0.38), transparent);
+            opacity: 0; transition: opacity .4s;
+        }
+        .chart-card:hover::before { opacity: 1; }
+        .chart-card:hover {
+            border-color: rgba(255,255,255,0.1);
+            box-shadow: 0 10px 50px rgba(0,0,0,0.45);
+        }
+        .chart-card .c-title {
+            font-size: .68rem; font-weight: 600; letter-spacing: 1.8px;
+            text-transform: uppercase; color: var(--text-muted); margin-bottom: 18px;
+        }
+
+        /* ── Table card ── */
+        .table-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 18px; overflow: hidden;
+            box-shadow: 0 4px 36px rgba(0,0,0,0.28);
+        }
+        .table-card-header {
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 12px; padding: 22px 24px 0;
+        }
+        .table-card-header h6 {
+            font-family: 'Syne', sans-serif; font-size: .9rem;
+            font-weight: 700; color: var(--text); margin: 0;
+        }
+        .table-card-header .th-sub {
+            font-family: 'Outfit', sans-serif; font-size: .75rem;
+            font-weight: 400; color: var(--text-muted); margin-left: 8px;
+        }
+        .table-filters {
+            display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+            padding: 14px 24px;
+        }
+        .dark-select {
+            background: var(--surface-2); border: 1px solid var(--border);
+            color: var(--text); border-radius: 8px; padding: 7px 12px;
+            font-size: .82rem; font-family: 'Outfit', sans-serif;
+            appearance: none; -webkit-appearance: none; cursor: pointer;
+            transition: border-color .2s;
+        }
+        .dark-select:focus { outline: none; border-color: var(--accent); }
+        .filter-count { font-size: .78rem; color: var(--text-muted); }
+
+        .tbl-search {
+            background: var(--surface-2); border: 1px solid var(--border);
+            color: var(--text); border-radius: 8px; padding: 7px 12px 7px 32px;
+            font-size: .82rem; font-family: 'Outfit', sans-serif;
+            width: 190px; transition: border-color .2s;
+        }
+        .tbl-search:focus { outline: none; border-color: var(--accent); }
+        .tbl-search::placeholder { color: var(--text-muted); }
+        .search-wrap { position: relative; }
+        .search-wrap i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: .8rem; pointer-events: none; }
+
+        /* ── Table ── */
+        .tbl-wrap { overflow-x: auto; }
+        table.dtable { width: 100%; border-collapse: collapse; }
+        table.dtable thead th {
+            background: var(--surface-2); color: var(--text-muted);
+            font-family: 'Outfit', sans-serif;
+            font-size: .66rem; font-weight: 600; letter-spacing: 1.8px;
+            text-transform: uppercase; padding: 12px 16px;
+            border-bottom: 1px solid var(--border); white-space: nowrap;
+        }
+        table.dtable thead th.sortable { cursor: pointer; user-select: none; }
+        table.dtable thead th.sortable:hover { color: var(--accent); }
+        table.dtable thead th .sort-icon { margin-left: 4px; opacity: .35; font-size: .7rem; }
+        table.dtable thead th.sort-active { color: var(--accent); }
+        table.dtable thead th.sort-active .sort-icon { opacity: 1; }
+        .cell-sub { font-size: .68rem; color: var(--text-muted); display: block; margin-top: 2px; }
+        .demand-badge {
+            display: inline-block; font-size: .6rem; font-weight: 700;
+            letter-spacing: .7px; text-transform: uppercase;
+            padding: 2px 6px; border-radius: 4px; margin-left: 6px;
+            vertical-align: middle;
+        }
+        .d-high { background: rgba(0,229,176,0.12); color: var(--accent);  border: 1px solid rgba(0,229,176,0.25); }
+        .d-med  { background: rgba(245,166,35,0.12); color: var(--amber);  border: 1px solid rgba(245,166,35,0.25); }
+        .d-low  { background: rgba(160,174,192,0.1); color: var(--text-soft); border: 1px solid rgba(160,174,192,0.2); }
+
+        table.dtable tbody tr {
+            border-bottom: 1px solid var(--border-soft);
+            transition: background .15s;
+        }
+        table.dtable tbody tr:last-child { border-bottom: none; }
+        table.dtable tbody tr:hover {
+            background: linear-gradient(90deg, rgba(0,229,176,0.045) 0%, rgba(0,229,176,0.01) 50%, transparent 100%);
+        }
+        table.dtable tbody td { padding: 12px 16px; font-size: .875rem; color: var(--text); }
+
+        .week-tag {
+            display: inline-block; background: var(--surface-3);
+            border: 1px solid rgba(0,229,176,0.22); color: var(--accent);
+            font-size: .72rem; font-weight: 600; padding: 3px 10px;
+            border-radius: 6px; letter-spacing: .5px;
+            box-shadow: 0 0 10px rgba(0,229,176,0.1);
+        }
+        .val-strong { font-weight: 600; color: var(--text); }
+        .val-green   { font-weight: 700; color: var(--accent); text-shadow: 0 0 12px rgba(0,229,176,0.3); }
+
+        .override-input {
+            width: 90px; background: var(--surface-2);
+            border: 1px solid var(--border); color: var(--text);
+            border-radius: 7px; padding: 5px 8px;
+            font-size: .82rem; font-family: 'Outfit', sans-serif;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .override-input:focus {
+            outline: none; border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-dim), 0 0 14px var(--accent-glow);
+        }
+        .override-saved { color: var(--accent); font-size: .72rem; display: none; margin-top: 3px; }
+        .star-btn { background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:1.1rem; padding:4px 6px; border-radius:6px; transition:color .15s,transform .15s; }
+        .star-btn:hover { color:var(--accent); transform:scale(1.15); }
+        .star-btn.star-on { color:var(--accent); }
+
+        /* ── History ── */
+        .history-row { cursor: pointer; }
+        .history-row:hover td { background: var(--surface-2) !important; }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(0,229,176,0.3); }
+
+        #results-section { display: none; }
+        #history-section { display: none; }
+
+        /* ── Chat Sidebar ── */
+        .chat-backdrop {
+            display: none; position: fixed; inset: 0; z-index: 199;
+            background: rgba(0,0,0,0.45); backdrop-filter: blur(2px);
+            animation: fadeIn .2s ease;
+        }
+        .chat-backdrop.open { display: block; }
+
+        .chat-sidebar {
+            position: fixed; top: 0; right: -420px; bottom: 0;
+            width: 390px; z-index: 200;
+            background: linear-gradient(160deg, var(--surface) 0%, rgba(6,8,16,0.99) 100%);
+            border-left: 1px solid var(--border);
+            display: flex; flex-direction: column;
+            transition: right .32s cubic-bezier(.16,1,.3,1), width .32s cubic-bezier(.16,1,.3,1);
+            box-shadow: -22px 0 64px rgba(0,0,0,0.65), -1px 0 0 rgba(0,229,176,0.07);
+        }
+        .chat-sidebar.open { right: 0; }
+        .chat-sidebar.open.expanded { width: 680px; }
+        @media (max-width: 600px) { .chat-sidebar { width: 100%; right: -100%; } }
+
+        .chat-header {
+            padding: 18px 18px 16px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+            background: linear-gradient(180deg, rgba(0,229,176,0.05) 0%, transparent 100%);
+        }
+        .chat-header-icon {
+            width: 38px; height: 38px; border-radius: 11px;
+            background: linear-gradient(135deg, rgba(0,229,176,0.18), rgba(124,106,255,0.1));
+            border: 1px solid rgba(0,229,176,.28);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--accent); font-size: 1.05rem; flex-shrink: 0;
+            box-shadow: 0 0 18px rgba(0,229,176,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+        .chat-header-title {
+            font-family: 'Syne', sans-serif; font-size: .88rem;
+            font-weight: 700; color: var(--text);
+        }
+        .chat-header-sub { font-size: .7rem; color: var(--text-muted); margin-top: 2px; }
+        .chat-close {
+            background: none; border: none; color: var(--text-muted);
+            font-size: 1rem; cursor: pointer; padding: 5px;
+            border-radius: 7px; transition: color .15s, background .15s;
+        }
+        .chat-close:hover { color: var(--text); background: var(--surface-2); }
+        .chat-header-actions { display: flex; gap: 2px; margin-left: auto; }
+
+        .chat-context-bar {
+            padding: 9px 16px; background: var(--surface-2);
+            border-bottom: 1px solid var(--border-soft);
+            font-size: .73rem; color: var(--text-muted);
+            display: none; flex-shrink: 0; line-height: 1.5;
+        }
+        .chat-context-bar.visible { display: block; }
+        .chat-context-bar strong { color: var(--accent); font-weight: 600; }
+
+        .chat-messages {
+            flex: 1; overflow-y: auto; padding: 16px;
+            display: flex; flex-direction: column; gap: 14px;
+        }
+
+        .chat-msg { display: flex; gap: 9px; }
+        .chat-msg.user { flex-direction: row-reverse; }
+
+        .chat-avatar {
+            width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: .75rem; margin-top: 2px;
+        }
+        .chat-msg.ai   .chat-avatar {
+            background: linear-gradient(135deg, rgba(0,229,176,0.18), rgba(0,229,176,0.05));
+            color: var(--accent); border: 1px solid rgba(0,229,176,.25);
+            box-shadow: 0 0 12px rgba(0,229,176,0.15);
+        }
+        .chat-msg.user .chat-avatar {
+            background: linear-gradient(135deg, rgba(124,106,255,0.18), rgba(124,106,255,0.05));
+            color: var(--purple); border: 1px solid rgba(124,106,255,.25);
+        }
+
+        .chat-bubble {
+            padding: 10px 13px; font-size: .845rem;
+            line-height: 1.6; max-width: calc(100% - 42px);
+            word-break: break-word;
+        }
+        .chat-msg.ai   .chat-bubble {
+            background: var(--surface-2); border: 1px solid var(--border);
+            color: var(--text); border-radius: 4px 12px 12px 12px;
+        }
+        .chat-msg.user .chat-bubble {
+            background: linear-gradient(135deg, rgba(124,106,255,.16), rgba(124,106,255,.07));
+            border: 1px solid rgba(124,106,255,.28);
+            color: var(--text); border-radius: 12px 4px 12px 12px;
+            box-shadow: 0 0 24px rgba(124,106,255,0.12);
+        }
+        .chat-bubble.chart-bubble { padding: 12px; min-width: 290px; flex: 1; }
+        .chart-label {
+            font-size: .7rem; font-weight: 700; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px;
+        }
+
+        @keyframes bounce-dot {
+            0%, 60%, 100% { transform: translateY(0); opacity: .4; }
+            30%            { transform: translateY(-5px); opacity: 1; }
+        }
+        .typing-dots { display: flex; gap: 5px; align-items: center; padding: 3px 0; }
+        .typing-dots span {
+            width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted);
+            animation: bounce-dot .9s ease-in-out infinite;
+        }
+        .typing-dots span:nth-child(2) { animation-delay: .15s; }
+        .typing-dots span:nth-child(3) { animation-delay: .30s; }
+
+        .chat-input-area {
+            padding: 13px 14px; border-top: 1px solid var(--border);
+            display: flex; gap: 9px; align-items: flex-end; flex-shrink: 0;
+            background: var(--surface);
+        }
+        .chat-input {
+            flex: 1; background: var(--surface-2); border: 1px solid var(--border);
+            color: var(--text); border-radius: 10px; padding: 9px 12px;
+            font-size: .845rem; font-family: 'Outfit', sans-serif;
+            resize: none; min-height: 40px; max-height: 110px;
+            line-height: 1.45; overflow-y: auto;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .chat-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim), 0 0 18px rgba(0,229,176,0.09); }
+        .chat-input::placeholder { color: var(--text-muted); }
+        .chat-send {
+            background: linear-gradient(135deg, var(--accent), #00c0a0);
+            border: none; color: #060810;
+            width: 40px; height: 40px; border-radius: 10px; cursor: pointer;
+            flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+            font-size: .9rem; transition: box-shadow .25s, transform .2s, opacity .2s;
+        }
+        .chat-send:hover:not(:disabled) { box-shadow: 0 0 26px var(--accent-glow); transform: translateY(-1px); }
+        .chat-send:active:not(:disabled) { transform: translateY(0); }
+        .chat-send:disabled { opacity: .35; cursor: not-allowed; }
+        .chat-mic {
+            background: var(--surface-2); border: 1px solid var(--border);
+            color: var(--text-muted); width: 40px; height: 40px; border-radius: 10px;
+            cursor: pointer; flex-shrink: 0; display: flex; align-items: center;
+            justify-content: center; font-size: .95rem;
+            transition: border-color .2s, color .2s, box-shadow .2s;
+        }
+        .chat-mic:hover { border-color: var(--accent); color: var(--accent); }
+        .voice-confirm-bar {
+            display: none; align-items: center; gap: 10px;
+            padding: 9px 14px; margin: 0 14px 10px;
+            background: var(--surface-2); border: 1px solid var(--border);
+            border-radius: 12px; font-size: .8rem; color: var(--text-soft);
+            animation: fadeUp .2s cubic-bezier(.16,1,.3,1);
+        }
+        .voice-confirm-bar.visible { display: flex; }
+        .voice-confirm-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .voice-confirm-actions { display: flex; gap: 6px; flex-shrink: 0; }
+        .voice-confirm-btn {
+            border: none; border-radius: 8px; padding: 6px 11px; cursor: pointer;
+            font-size: .76rem; font-weight: 600; display: flex; align-items: center; gap: 4px;
+            font-family: 'Outfit', sans-serif; transition: opacity .2s, transform .2s;
+        }
+        .voice-confirm-btn:hover { transform: translateY(-1px); }
+        .voice-confirm-yes { background: linear-gradient(135deg, var(--accent), #00b389); color: #05100c; }
+        .voice-confirm-no  { background: var(--surface); border: 1px solid var(--border); color: var(--text-soft); }
+        .chat-mic.listening {
+            border-color: #ff4d6d; color: #ff4d6d;
+            box-shadow: 0 0 0 3px rgba(255,77,109,0.18);
+            animation: mic-pulse 1s ease-in-out infinite;
+        }
+        @keyframes mic-pulse {
+            0%, 100% { box-shadow: 0 0 0 3px rgba(255,77,109,0.18); }
+            50%       { box-shadow: 0 0 0 6px rgba(255,77,109,0.08); }
+        }
+
+        .btn-chat-toggle {
+            background: rgba(0,229,176,0.08); border: 1px solid rgba(0,229,176,.22);
+            color: var(--accent); font-family: 'Outfit', sans-serif;
+            font-size: .8rem; font-weight: 500; padding: 7px 16px;
+            border-radius: 9px; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 7px;
+            position: relative; overflow: hidden;
+            transition: border-color .25s, box-shadow .25s, background .25s, transform .2s;
+        }
+        .btn-chat-toggle::before {
+            content: '';
+            position: absolute; top: 0; width: 40%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0,229,176,0.18), transparent);
+            left: -50%; animation: btn-shimmer 2.2s ease-in-out infinite;
+            pointer-events: none;
+        }
+        .btn-chat-toggle:hover {
+            border-color: var(--accent); background: rgba(0,229,176,.13);
+            box-shadow: 0 0 22px var(--accent-glow); transform: translateY(-1px);
+        }
+
+        /* ── Drilldown card ── */
+        .drilldown-controls {
+            display: flex; align-items: center; flex-wrap: wrap;
+            gap: 10px; margin-bottom: 16px;
+        }
+        .drilldown-label {
+            font-size: .78rem; color: var(--text-muted); flex: 1; min-width: 160px;
+        }
+
+        /* ── Session end modal ── */
+        .modal-backdrop {
+            display: none; position: fixed; inset: 0; z-index: 400;
+            background: rgba(0,0,0,0.65); backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            align-items: center; justify-content: center;
+        }
+        .modal-backdrop.open { display: flex; animation: fadeIn .18s ease; }
+        .modal-box {
+            background: linear-gradient(155deg, var(--surface) 0%, rgba(8,10,18,0.98) 100%);
+            border: 1px solid var(--border);
+            border-radius: 20px; padding: 32px 30px 28px;
+            max-width: 420px; width: 90%;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.04),
+                        inset 0 1px 0 rgba(255,255,255,0.05);
+            animation: fadeUp .28s cubic-bezier(.16,1,.3,1);
+        }
+        .modal-icon {
+            width: 48px; height: 48px; border-radius: 14px;
+            background: var(--danger-dim); border: 1px solid rgba(255,77,106,0.25);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--danger); font-size: 1.3rem; margin-bottom: 20px;
+            box-shadow: 0 0 22px rgba(255,77,106,0.14);
+        }
+        .modal-title {
+            font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 800;
+            color: var(--text); margin-bottom: 8px;
+        }
+        .modal-body {
+            font-size: .88rem; color: var(--text-soft); line-height: 1.65;
+            margin-bottom: 26px;
+        }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+        .btn-modal-cancel {
+            background: transparent; border: 1px solid var(--border);
+            color: var(--text-soft); font-family: 'Outfit', sans-serif;
+            font-size: .85rem; font-weight: 500; padding: 9px 20px;
+            border-radius: 10px; cursor: pointer;
+            transition: border-color .2s, color .2s;
+        }
+        .btn-modal-cancel:hover { border-color: var(--text-soft); color: var(--text); }
+        .btn-modal-confirm {
+            background: linear-gradient(135deg, #ff4d6a, #e0204a);
+            color: #fff; font-family: 'Outfit', sans-serif;
+            font-size: .85rem; font-weight: 700; padding: 9px 22px;
+            border-radius: 10px; border: none; cursor: pointer;
+            position: relative; overflow: hidden;
+            transition: box-shadow .25s, transform .2s;
+        }
+        .btn-modal-confirm:hover { box-shadow: 0 0 30px rgba(255,77,106,0.45); transform: translateY(-1px); }
+        .btn-modal-confirm:active { transform: translateY(0); }
+
+        /* ── Column mapping modal ── */
+        .modal-box-wide { max-width: 700px; }
+        .mapping-scroll-body { max-height: 55vh; overflow-y: auto; margin: 0 -6px; padding: 0 6px; }
+        .btn-modal-confirm-accent {
+            background: linear-gradient(135deg, var(--accent), #00b389);
+            color: #05100c; font-family: 'Outfit', sans-serif;
+            font-size: .85rem; font-weight: 700; padding: 9px 22px;
+            border-radius: 10px; border: none; cursor: pointer;
+            transition: box-shadow .25s, transform .2s;
+        }
+        .btn-modal-confirm-accent:hover { box-shadow: 0 0 30px rgba(0,229,176,0.4); transform: translateY(-1px); }
+        .btn-modal-confirm-accent:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; transform: none; }
+        .map-row {
+            display: flex; align-items: center; gap: 12px;
+            padding: 8px 0; border-bottom: 1px solid var(--border-soft);
+        }
+        .map-row:last-child { border-bottom: none; }
+        .map-required { flex: 0 0 220px; font-size: .82rem; color: var(--text); font-weight: 600; }
+        .map-required small { display: block; font-weight: 400; color: var(--text-muted); font-size: .7rem; margin-top: 1px; }
+        .map-arrow { color: var(--text-muted); font-size: .85rem; }
+        .map-select-wrap { flex: 1; min-width: 0; }
+        .map-select-wrap select { width: 100%; }
+        .map-unmatched select { border-color: rgba(255,77,106,0.4); }
+        .map-optional-tag {
+            font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+            color: var(--text-muted); background: var(--surface-3); border: 1px solid var(--border);
+            border-radius: 5px; padding: 1px 6px; margin-left: 6px; vertical-align: middle;
+        }
+
+        .conf-badge {
+            font-size: .64rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
+            border-radius: 6px; padding: 2px 7px; white-space: nowrap; flex-shrink: 0;
+        }
+        .conf-high   { background: rgba(0,229,176,0.12);  color: var(--accent); border: 1px solid rgba(0,229,176,0.25); }
+        .conf-medium { background: var(--amber-dim, rgba(245,166,35,0.1)); color: var(--amber); border: 1px solid rgba(245,166,35,0.25); }
+        .conf-low    { background: rgba(255,77,106,0.1);  color: var(--danger); border: 1px solid rgba(255,77,106,0.25); }
+        .conf-none   { background: rgba(255,77,106,0.1);  color: var(--danger); border: 1px solid rgba(255,77,106,0.25); }
+        .conf-ai     { background: rgba(124,106,255,0.12); color: var(--purple); border: 1px solid rgba(124,106,255,0.25); }
+
+        /* ── Category/cuisine review modal ── */
+        .review-scroll-body { max-height: 55vh; overflow-y: auto; margin: 0 -6px; padding: 0 6px; }
+        .review-notice {
+            display: flex; gap: 10px; align-items: flex-start;
+            background: var(--surface-2); border: 1px solid var(--border);
+            border-radius: 10px; padding: 10px 12px; margin-bottom: 14px;
+            font-size: .78rem; color: var(--text-soft); line-height: 1.55;
+        }
+        .review-notice i { color: var(--amber); margin-top: 1px; }
+        .review-section-title {
+            font-size: .7rem; font-weight: 700; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: .05em; margin: 16px 0 8px;
+        }
+        .review-row {
+            display: flex; align-items: center; gap: 10px;
+            padding: 7px 0; border-bottom: 1px solid var(--border-soft);
+        }
+        .review-row:last-child { border-bottom: none; }
+        .review-raw {
+            flex: 0 0 150px; font-size: .8rem; color: var(--text);
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .review-arrow { color: var(--text-muted); font-size: .8rem; flex-shrink: 0; }
+        .review-select-wrap { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; }
+        .review-select-wrap select { width: 100%; }
+        .review-row-tall { align-items: flex-start; padding: 10px 0; }
+        .review-row-tall .review-arrow { margin-top: 8px; }
+        .review-select-col { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+        .review-select-col .review-select-line { display: flex; align-items: center; gap: 8px; width: 100%; }
+        .review-select-col select { width: 100%; }
+        .review-reason { font-size: .72rem; color: var(--text-muted); line-height: 1.4; }
+        .review-cat-sub { display: block; font-weight: 400; color: var(--text-muted); font-size: .68rem; margin-top: 1px; }
+
+        /* ── Suggested prompt chips ── */
+        .chat-chips {
+            padding: 8px 14px 6px;
+            display: flex; flex-wrap: wrap; gap: 6px;
+            border-top: 1px solid var(--border-soft);
+            flex-shrink: 0;
+        }
+        .chat-chip {
+            background: var(--surface-2); border: 1px solid var(--border);
+            color: var(--text-soft); font-size: .73rem;
+            font-family: 'Outfit', sans-serif; font-weight: 500;
+            padding: 5px 12px; border-radius: 99px; cursor: pointer;
+            transition: border-color .2s, color .2s, background .2s, box-shadow .2s;
+            white-space: nowrap;
+        }
+        .chat-chip:hover {
+            border-color: var(--accent); color: var(--accent);
+            background: rgba(0,229,176,0.05);
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+        /* ── Print / PDF ── */
+        @media print {
+            .orb, .cursor-glow, #end-session-modal, nav.topnav, #upload-section, #history-section,
+            .chat-backdrop, .chat-sidebar, .section-header .btn-ghost,
+            .table-card-header .btn-accent, .table-card-header .btn-ghost,
+            .table-filters, #pagination-bar, .override-input, .override-saved,
+            .btn-chat-toggle { display: none !important; }
+
+            body { background: #fff !important; color: #111 !important;
+                   background-image: none !important; }
+            .page { padding: 16px !important; max-width: 100% !important; }
+            .stat-card, .chart-card, .table-card { background: #fff !important;
+                border: 1px solid #ccc !important; break-inside: avoid;
+                box-shadow: none !important; }
+            .stat-card::before, .stat-card::after,
+            .chart-card::before { display: none !important; }
+            .stat-card .s-label, table.dtable thead th { color: #555 !important; }
+            .stat-card .s-value, .val-green { color: #00a878 !important; text-shadow: none !important; }
+            table.dtable thead th { background: #f4f4f4 !important; }
+            table.dtable tbody td { color: #111 !important; }
+            .week-tag { background: #eee !important; color: #00a878 !important;
+                        border: 1px solid #ccc !important; }
+            .c-title { color: #555 !important; }
+            canvas { max-width: 100% !important; }
+            .chart-grid { grid-template-columns: 1fr 1fr !important; }
+            .print-title { display: block !important; }
+        }
+        .print-title { display: none; font-family: 'Syne', sans-serif;
+                        font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; }
+
+        /* ── Nav user pill ── */
+        .nav-user {
+            display: flex; align-items: center; gap: 7px;
+            font-size: .78rem; color: var(--text-soft);
+            padding: 6px 13px;
+            background: var(--surface-2); border: 1px solid var(--border);
+            border-radius: 9px; white-space: nowrap; max-width: 180px; overflow: hidden;
+        }
+        .nav-user i { color: var(--accent); flex-shrink: 0; }
+        .nav-user span { overflow: hidden; text-overflow: ellipsis; }
+    </style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<!-- Navbar -->
+<nav class="topnav">
+    <span class="brand"><i class="bi bi-graph-up-arrow" style="-webkit-text-fill-color:var(--accent); margin-right:10px;"></i>ForecastIQ</span>
+    <span class="nav-sub d-none d-md-block">Food Demand Forecasting</span>
+    <button class="btn-chat-toggle" onclick="toggleChat()">
+        <i class="bi bi-stars"></i>AI Assistant
+    </button>
+    <button class="btn-nav" onclick="showHistory()">
+        <i class="bi bi-clock-history" style="margin-right:6px;"></i>History
+    </button>
+    <div class="nav-user d-none d-md-flex">
+        <i class="bi bi-shop"></i>
+        <span title="{{ user_email }}">{{ restaurant_name }}</span>
+    </div>
+    <button class="btn-nav" onclick="askLogout()">
+        <i class="bi bi-box-arrow-right" style="margin-right:4px;"></i>Logout
+    </button>
+</nav>
+
+<div class="page">
+
+    <!-- ── Upload Section ── -->
+    <div id="upload-section">
+        <div style="max-width:620px; margin:0 auto;">
+
+            <div class="anim-1" style="margin-bottom:34px;">
+                <div style="display:inline-flex;align-items:center;gap:8px;padding:5px 14px;border-radius:99px;background:rgba(0,229,176,0.08);border:1px solid rgba(0,229,176,0.2);margin-bottom:18px;font-size:.72rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);">
+                    <i class="bi bi-stars"></i>AI-Powered Forecasting
+                </div>
+                <h1 style="font-family:'Syne',sans-serif;font-size:2.6rem;font-weight:800;background:linear-gradient(135deg,var(--text) 0%,var(--accent) 52%,var(--purple) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:12px;letter-spacing:-.5px;line-height:1.15;">
+                    Demand Forecasting
+                </h1>
+                <p style="color:var(--text-soft); font-size:.95rem; line-height:1.65; max-width:480px;">
+                    Upload your historical sales data to generate AI-powered demand forecasts and reduce food waste.
+                </p>
+            </div>
+
+            <div class="card-dark anim-2">
+
+                <div class="upload-zone" id="upload-zone"
+                     onclick="document.getElementById('file-input').click()">
+                    <i class="bi bi-cloud-arrow-up uz-icon"></i>
+                    <p class="uz-title">Drop your file here or click to browse</p>
+                    <p class="uz-sub">Accepted formats: .csv &nbsp;·&nbsp; .xlsx &nbsp;·&nbsp; .xls</p>
+                    <button class="btn-ghost" style="font-size:.8rem; padding:7px 16px;"
+                            onclick="event.stopPropagation(); window.location='/template'">
+                        <i class="bi bi-download"></i>Download Template
+                    </button>
+                    <input type="file" id="file-input" accept=".csv,.xlsx,.xls" hidden>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="anim-3">
+                    <span class="field-label">How far ahead would you like to forecast?</span>
+                    <div class="toggles">
+                        <input type="radio" name="horizon" id="h1"  value="1">
+                        <label for="h1">1 Week</label>
+                        <input type="radio" name="horizon" id="h4"  value="4" checked>
+                        <label for="h4">4 Weeks</label>
+                        <input type="radio" name="horizon" id="h8"  value="8">
+                        <label for="h8">8 Weeks</label>
+                        <input type="radio" name="horizon" id="h12" value="12">
+                        <label for="h12">12 Weeks</label>
+                    </div>
+                </div>
+
+
+                <!-- Progress bar -->
+                <div class="progress-wrap" id="spinner">
+                    <div class="progress-header">
+                        <span class="progress-stage-label" id="progress-stage">Uploading your file…</span>
+                        <span class="progress-time-label"  id="progress-time"></span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <div class="progress-pct" id="progress-pct">0%</div>
+                </div>
+
+                <!-- Error -->
+                <div class="alert-error" id="upload-error">
+                    <i class="bi bi-exclamation-circle-fill" style="margin-right:7px;"></i>
+                    <span id="upload-error-msg"></span>
+                    <div id="upload-error-template" style="margin-top:10px; display:none;">
+                        <a href="/template" class="btn-danger-ghost">
+                            <i class="bi bi-download"></i>Download Data Template
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Results Section ── -->
+    <div id="results-section">
+
+        <div class="print-title">ForecastIQ — Demand Forecast Report</div>
+
+        <div class="section-header">
+            <h2>Forecast Results</h2>
+            <button class="btn-ghost" onclick="askEndSession()">
+                <i class="bi bi-arrow-left"></i>Upload New File
+            </button>
+        </div>
+
+        <!-- Stat cards -->
+        <div class="stat-grid">
+            <div class="stat-card">
+                <div class="s-label">Total Records</div>
+                <div class="s-value" id="stat-records">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="s-label">Weeks of History</div>
+                <div class="s-value" id="stat-weeks">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="s-label">Locations</div>
+                <div class="s-value" id="stat-centers">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="s-label">Menu Items</div>
+                <div class="s-value" id="stat-meals">—</div>
+            </div>
+        </div>
+
+        <!-- Featured recalculate bar -->
+        <div id="featured-bar" style="display:none;position:sticky;top:68px;z-index:90;margin-bottom:18px;padding:12px 20px;border-radius:12px;background:rgba(15,20,30,0.95);border:1px solid var(--accent);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+            <span style="font-size:.84rem;color:var(--text-soft);">
+                <i class="bi bi-star-fill" style="color:var(--accent);margin-right:6px;"></i>
+                <span id="featured-count">0</span> item(s) marked as featured — recalculate to see uplifted demand predictions.
+            </span>
+            <div style="display:flex;gap:8px;">
+                <button class="btn-ghost" style="padding:7px 14px;font-size:.8rem;" onclick="clearFeatured()">Clear</button>
+                <button class="btn-ghost" style="padding:7px 14px;font-size:.8rem;" onclick="dismissFeaturedBar()">Done</button>
+                <button class="btn-accent" style="padding:7px 16px;font-size:.8rem;" onclick="applyFeatured()" id="featured-recalc-btn">
+                    <i class="bi bi-arrow-repeat"></i> Recalculate
+                </button>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="chart-grid">
+            <div class="chart-card">
+                <div class="c-title"><i class="bi bi-bar-chart-line me-2"></i>Demand Trend &amp; Forecast</div>
+                <canvas id="trend-chart" height="120"></canvas>
+            </div>
+            <div class="chart-card" style="display:flex; flex-direction:column;">
+                <div class="c-title"><i class="bi bi-trophy me-2"></i>Top 10 Menu Items</div>
+                <div style="position:relative; flex:1; min-height:220px;">
+                    <canvas id="meals-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Drilldown row -->
+        <div class="chart-grid" style="margin-bottom:20px;">
+            <div class="chart-card">
+                <div class="drilldown-controls">
+                    <div class="c-title" style="margin:0; flex-shrink:0;">
+                        <i class="bi bi-crosshair2 me-2"></i>Item / Location Drilldown
+                    </div>
+                    <select class="dark-select" id="dd-center" onchange="updateDrilldown()" style="width:150px;"></select>
+                    <select class="dark-select" id="dd-meal" onchange="updateDrilldown()" style="width:150px;"></select>
+                    <span class="drilldown-label" id="dd-label">Select a location or item</span>
+                </div>
+                <canvas id="drilldown-chart" height="120"></canvas>
+            </div>
+            <div class="chart-card" style="display:flex; flex-direction:column;">
+                <div class="c-title"><i class="bi bi-pie-chart me-2"></i>Forecast by Category</div>
+                <div style="position:relative; flex:1; min-height:220px;">
+                    <canvas id="category-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Forecast table -->
+        <div class="table-card">
+            <div class="table-card-header">
+                <h6>
+                    <i class="bi bi-table me-2" style="color:var(--accent);"></i>Forecast Detail
+                    <span class="th-sub">— adjust quantities under "Adjustment" if needed</span>
+                </h6>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button class="btn-ghost" onclick="downloadPDF()">
+                        <i class="bi bi-file-earmark-pdf"></i>Download PDF
+                    </button>
+                    <button class="btn-ghost" onclick="downloadExcel()">
+                        <i class="bi bi-file-earmark-excel"></i>Download Excel
+                    </button>
+                    <button class="btn-accent" onclick="downloadForecast()">
+                        <i class="bi bi-download"></i>Download CSV
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-filters" style="border-bottom:1px solid var(--border-soft); padding-bottom:14px;">
+                <span class="field-label" style="margin:0; white-space:nowrap;">Safety Buffer:</span>
+                <div class="toggles">
+                    <input type="radio" name="buffer" id="b0"  value="0">
+                    <label for="b0">+0%</label>
+                    <input type="radio" name="buffer" id="b5"  value="5">
+                    <label for="b5">+5%</label>
+                    <input type="radio" name="buffer" id="b10" value="10" checked>
+                    <label for="b10">+10%</label>
+                    <input type="radio" name="buffer" id="b15" value="15">
+                    <label for="b15">+15%</label>
+                    <input type="radio" name="buffer" id="b20" value="20">
+                    <label for="b20">+20%</label>
+                </div>
+                <span style="font-size:.78rem; color:var(--text-muted);">extra stock added on top of the forecast</span>
+            </div>
+
+            <div class="table-filters">
+                <div class="search-wrap">
+                    <i class="bi bi-search"></i>
+                    <input type="text" class="tbl-search" id="tbl-search"
+                           placeholder="Search item name, category, cuisine…"
+                           oninput="applyFilters()">
+                </div>
+                <span class="field-label" style="margin:0;">Location:</span>
+                <select class="dark-select" id="filter-center" onchange="applyFilters()" style="width:130px;"></select>
+                <span class="field-label" style="margin:0;">Category:</span>
+                <select class="dark-select" id="filter-category" onchange="applyFilters()" style="width:140px;"></select>
+                <span class="field-label" style="margin:0;">Cuisine:</span>
+                <select class="dark-select" id="filter-cuisine" onchange="applyFilters()" style="width:130px;"></select>
+                <span class="field-label" style="margin:0;">Priority:</span>
+                <select class="dark-select" id="filter-priority" onchange="applyFilters()" style="width:130px;">
+                    <option value="">All Priorities</option>
+                    <option value="high">🟢 High</option>
+                    <option value="med">🟡 Medium</option>
+                    <option value="low">⚪ Low</option>
+                </select>
+                <button class="btn-ghost" style="padding:6px 14px; font-size:.8rem;" onclick="clearFilters()">
+                    <i class="bi bi-x-circle"></i>Clear
+                </button>
+                <span class="filter-count" id="filter-count"></span>
+            </div>
+
+            <div class="tbl-wrap">
+                <table class="dtable" id="forecast-table">
+                    <thead>
+                        <tr>
+                            <th class="sortable" id="th-week" onclick="sortTable('week')">Week <span class="sort-icon">↕</span></th>
+                            <th>Location</th>
+                            <th>Menu Item</th>
+                            <th class="sortable" id="th-forecast" onclick="sortTable('forecast')">AI Forecast <span class="sort-icon">↕</span></th>
+                            <th class="sortable" id="th-recqty" onclick="sortTable('recqty')">Recommended Qty <span class="sort-icon">↕</span></th>
+                            <th>Adjustment</th>
+                            <th title="Mark item as featured this week to recalculate with promotional uplift">Featured</th>
+                        </tr>
+                    </thead>
+                    <tbody id="forecast-tbody"></tbody>
+                </table>
+            </div>
+            <!-- Pagination -->
+            <div id="pagination-bar" style="display:none; align-items:center; justify-content:space-between; padding:14px 24px; border-top:1px solid var(--border-soft); flex-wrap:wrap; gap:10px;">
+                <span id="page-info" style="font-size:.8rem; color:var(--text-muted);"></span>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn-ghost" id="btn-prev" style="padding:6px 14px; font-size:.8rem;" onclick="changePage(-1)">
+                        <i class="bi bi-chevron-left"></i> Prev
+                    </button>
+                    <button class="btn-ghost" id="btn-next" style="padding:6px 14px; font-size:.8rem;" onclick="changePage(1)">
+                        Next <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    <!-- ── Track Accuracy Section ── -->
+    <div id="accuracy-section" style="display:none; margin-top:28px;">
+        <div class="section-header">
+            <h2><i class="bi bi-bullseye me-2" style="color:var(--accent);"></i>Track Forecast Accuracy</h2>
+        </div>
+        <div class="card-dark">
+            <p style="color:var(--text-soft); font-size:.88rem; margin-bottom:22px;">
+                Once the forecast weeks have passed, enter the actual total orders to see how accurate the AI was.
+            </p>
+            <div id="actuals-inputs"></div>
+            <button class="btn-accent" onclick="submitActuals()" style="margin-top:18px;">
+                <i class="bi bi-check2-circle"></i>Save & Compare
+            </button>
+            <div id="accuracy-result" style="display:none; margin-top:32px;">
+                <div class="chart-card" style="margin-bottom:20px;">
+                    <div class="c-title"><i class="bi bi-bar-chart-steps me-2"></i>Forecast vs Actual</div>
+                    <canvas id="accuracy-chart" height="100"></canvas>
+                </div>
+                <div id="accuracy-stats" style="display:flex; gap:14px; flex-wrap:wrap;"></div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+    <!-- ── History Section ── -->
+    <div id="history-section">
+
+        <div class="section-header">
+            <h2><i class="bi bi-clock-history me-2" style="color:var(--accent);"></i>Forecast History</h2>
+            <button class="btn-ghost" onclick="backToUpload()">
+                <i class="bi bi-arrow-left"></i>Back
+            </button>
+        </div>
+
+        <div class="table-card">
+            <div style="padding:16px 24px; border-bottom:1px solid var(--border-soft);">
+                <p style="font-size:.82rem; color:var(--text-muted); margin:0;">
+                    Click any row to reload that session's forecasts.
+                </p>
+            </div>
+            <div class="tbl-wrap">
+                <table class="dtable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Date</th>
+                            <th>File</th>
+                            <th>Records</th>
+                            <th>Weeks</th>
+                            <th>Locations</th>
+                            <th>Menu Items</th>
+                            <th>Forecast Period</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-tbody"></tbody>
+                </table>
+            </div>
+            <p id="history-empty" style="text-align:center; color:var(--text-muted); font-size:.85rem; padding:36px; display:none;">
+                No forecast sessions saved yet.
+            </p>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Session end confirmation modal -->
+<div class="modal-backdrop" id="end-session-modal" onclick="closeEndSessionModal(event)">
+    <div class="modal-box">
+        <div class="modal-icon"><i class="bi bi-arrow-left-circle-fill"></i></div>
+        <div class="modal-title">End this session?</div>
+        <div class="modal-body">
+            Your forecast data and AI conversation history will be cleared. You'll start fresh with a new file upload.
+        </div>
+        <div class="modal-actions">
+            <button class="btn-modal-cancel" onclick="closeEndSessionModal()">Keep Session</button>
+            <button class="btn-modal-confirm" onclick="confirmEndSession()">
+                <i class="bi bi-arrow-left me-1"></i>End Session
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Logout confirmation modal -->
+<div class="modal-backdrop" id="logout-modal" onclick="closeLogoutModal(event)">
+    <div class="modal-box">
+        <div class="modal-icon"><i class="bi bi-box-arrow-right"></i></div>
+        <div class="modal-title">Log out?</div>
+        <div class="modal-body">
+            Your current forecast session and AI conversation will be cleared. Your saved forecast history will remain accessible when you sign back in.
+        </div>
+        <div class="modal-actions">
+            <button class="btn-modal-cancel" onclick="closeLogoutModal()">Stay</button>
+            <button class="btn-modal-confirm" onclick="window.location='/logout'">
+                <i class="bi bi-box-arrow-right me-1"></i>Log Out
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Column mapping modal -->
+<div class="modal-backdrop" id="mapping-modal" onclick="if (event.target === this) closeMappingModal();">
+    <div class="modal-box modal-box-wide">
+        <div class="modal-icon" style="background:rgba(0,229,176,0.1); border-color:rgba(0,229,176,0.25); color:var(--accent); box-shadow:0 0 22px rgba(0,229,176,0.14);">
+            <i class="bi bi-columns-gap"></i>
+        </div>
+        <div class="modal-title">Match your columns</div>
+        <div class="modal-body">
+            We couldn't find an exact match for every required field. Confirm (or fix) how your file's columns line up below — we'll auto-convert the rest.
+        </div>
+        <div class="mapping-scroll-body">
+            <div id="mapping-rows"></div>
+        </div>
+        <div class="modal-actions" style="margin-top:18px;">
+            <button class="btn-modal-cancel" onclick="closeMappingModal()">Cancel</button>
+            <button class="btn-modal-confirm-accent" id="mapping-confirm-btn" onclick="confirmMapping()">
+                <i class="bi bi-check2 me-1"></i>Confirm &amp; Continue
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Category/cuisine review modal -->
+<div class="modal-backdrop" id="review-modal" onclick="if (event.target === this) closeReviewModal();">
+    <div class="modal-box modal-box-wide">
+        <div class="modal-icon" style="background:rgba(245,166,35,0.1); border-color:rgba(245,166,35,0.25); color:var(--amber); box-shadow:0 0 22px rgba(245,166,35,0.14);">
+            <i class="bi bi-tags"></i>
+        </div>
+        <div class="modal-title">Review unrecognized items</div>
+        <div class="modal-body">
+            Some meal or center IDs in your file weren't in the trained dataset. We've matched what we can against your existing menu categories/cuisines — confirm or fix anything below. Anything left blank will be excluded from this forecast rather than guessed at.
+        </div>
+        <div class="review-scroll-body">
+            <div id="review-notices"></div>
+            <div id="review-category-section" style="display:none;">
+                <div class="review-section-title">Menu categories</div>
+                <div id="review-category-rows"></div>
+            </div>
+            <div id="review-cuisine-section" style="display:none;">
+                <div class="review-section-title">Cuisine types</div>
+                <div id="review-cuisine-rows"></div>
+                <div id="review-cuisine-defaults-rows"></div>
+            </div>
+        </div>
+        <div class="modal-actions" style="margin-top:18px;">
+            <button class="btn-modal-cancel" onclick="closeReviewModal()">Cancel</button>
+            <button class="btn-modal-confirm-accent" onclick="confirmCategoryReview()">
+                <i class="bi bi-check2 me-1"></i>Confirm &amp; Save
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Chat backdrop -->
+<div class="chat-backdrop" id="chat-backdrop" onclick="toggleChat()"></div>
+
+<!-- Chat sidebar -->
+<div class="chat-sidebar" id="chat-sidebar">
+    <div class="chat-header">
+        <div class="chat-header-icon"><i class="bi bi-stars"></i></div>
+        <div>
+            <div class="chat-header-title">ForecastIQ Assistant</div>
+            <div class="chat-header-sub">AI-powered forecasting insights</div>
+        </div>
+        <div class="chat-header-actions">
+            <button class="chat-close" id="chat-expand-btn" onclick="toggleChatExpand()" title="Expand"><i class="bi bi-arrows-fullscreen"></i></button>
+            <button class="chat-close" onclick="toggleChat()" title="Close"><i class="bi bi-x-lg"></i></button>
+        </div>
+    </div>
+    <div class="chat-context-bar" id="chat-context-bar"></div>
+    <div class="chat-messages" id="chat-messages"></div>
+    <div class="chat-chips" id="chat-chips"></div>
+    <div class="voice-confirm-bar" id="voice-confirm-bar">
+        <i class="bi bi-mic-fill" style="color:var(--accent);"></i>
+        <span class="voice-confirm-text">Send this message?</span>
+        <div class="voice-confirm-actions">
+            <button class="voice-confirm-btn voice-confirm-no" onclick="voiceConfirmEdit()"><i class="bi bi-pencil"></i>Edit</button>
+            <button class="voice-confirm-btn voice-confirm-no" onclick="voiceConfirmRetry()"><i class="bi bi-arrow-repeat"></i>Retry</button>
+            <button class="voice-confirm-btn voice-confirm-yes" onclick="voiceConfirmSend()"><i class="bi bi-check2"></i>Send</button>
+        </div>
+    </div>
+    <div class="chat-input-area">
+        <textarea class="chat-input" id="chat-input" rows="1"
+            placeholder="Ask about your forecasts…"
+            onkeydown="chatKeydown(event)"></textarea>
+        <button class="chat-mic" id="chat-mic" onclick="toggleVoice()" title="Voice input">
+            <i class="bi bi-mic-fill" id="mic-icon"></i>
+        </button>
+        <button class="chat-send" id="chat-send" onclick="sendChatMessage()" title="Send">
+            <i class="bi bi-send-fill"></i>
+        </button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Chart.js dark defaults
+Chart.defaults.color       = '#a0aec0';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+Chart.defaults.font.family = "'Outfit', sans-serif";
+
+const ACCENT  = '#00e5b0';
+const PURPLE  = '#7c6aff';
+const AMBER   = '#f5a623';
+const PINK    = '#e064f7';
+
+let trendChart = null, mealsChart = null, drilldownChart = null, categoryChart = null;
+let forecastData = [], currentSessionId = null;
+let featuredItems = new Set();   // keys: "center_id_meal_id"
+
+// ── Count-up animation ──────────────────────────────────────────────────────
+function animateCount(el, to, duration = 900) {
+    const start = performance.now();
+    const step  = now => {
+        const t = Math.min((now - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - t, 3);
+        el.textContent = Math.round(to * ease).toLocaleString();
+        if (t < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+}
+
+// ── Progress bar engine ─────────────────────────────────────────────────────
+const STAGES = [
+    { pct: 12,  ms: 1500,  label: 'Uploading your file…' },
+    { pct: 30,  ms: 3000,  label: 'Reading and checking your data…' },
+    { pct: 55,  ms: 5000,  label: 'Analysing sales patterns…' },
+    { pct: 78,  ms: 6000,  label: 'Running AI forecast engine…' },
+    { pct: 92,  ms: 3500,  label: 'Preparing your results…' },
+    { pct: 98,  ms: 99999, label: 'Almost there…' },
+];
+let _stageTimer = null, _countTimer = null, _progressValue = 0;
+
+function estimateSeconds(bytes) {
+    if (bytes < 1  * 1024 * 1024) return 8;
+    if (bytes < 5  * 1024 * 1024) return 15;
+    if (bytes < 20 * 1024 * 1024) return 25;
+    return 40;
+}
+
+function startProgress(fileBytes) {
+    _progressValue = 0;
+    let countdown = estimateSeconds(fileBytes), stageIdx = 0;
+    const fill    = document.getElementById('progress-fill');
+    const stageEl = document.getElementById('progress-stage');
+    const timeEl  = document.getElementById('progress-time');
+    const pctEl   = document.getElementById('progress-pct');
+    fill.style.width = '0%'; pctEl.textContent = '0%';
+    timeEl.textContent = `About ${countdown} second${countdown !== 1 ? 's' : ''} remaining`;
+
+    function runStage() {
+        if (stageIdx >= STAGES.length) return;
+        const stage  = STAGES[stageIdx];
+        const from   = stageIdx > 0 ? STAGES[stageIdx - 1].pct : 0;
+        const range  = stage.pct - from;
+        const stepMs = 120;
+        const steps  = Math.max(1, stage.ms / stepMs);
+        const pctSt  = range / steps;
+        let step = 0;
+        stageEl.textContent = stage.label;
+        _stageTimer = setInterval(() => {
+            step++;
+            _progressValue = Math.min(from + pctSt * step, stage.pct);
+            fill.style.width = _progressValue.toFixed(1) + '%';
+            pctEl.textContent = Math.round(_progressValue) + '%';
+            if (step >= steps) { clearInterval(_stageTimer); stageIdx++; runStage(); }
+        }, stepMs);
+    }
+    runStage();
+
+    _countTimer = setInterval(() => {
+        countdown = Math.max(0, countdown - 1);
+        timeEl.textContent = countdown > 0
+            ? `About ${countdown} second${countdown !== 1 ? 's' : ''} remaining`
+            : 'Finalising…';
+    }, 1000);
+}
+
+function stopProgress() {
+    clearInterval(_stageTimer); clearInterval(_countTimer);
+    document.getElementById('progress-fill').style.width = '100%';
+    document.getElementById('progress-pct').textContent   = '100%';
+    document.getElementById('progress-stage').textContent = 'Done!';
+    document.getElementById('progress-time').textContent  = '';
+}
+
+// ── Buffer ──────────────────────────────────────────────────────────────────
+function getBuffer() {
+    const el = document.querySelector('input[name="buffer"]:checked');
+    return el ? parseInt(el.value) : 10;
+}
+function refreshRecQty() {
+    const buf = getBuffer();
+    document.querySelectorAll('#forecast-tbody tr').forEach(tr => {
+        const input  = tr.querySelector('.override-input');
+        const recEl  = tr.querySelector('.rec-qty');
+        if (!input || !recEl) return;
+        const idx = parseInt(input.dataset.idx);
+        if (forecastData[idx])
+            recEl.textContent = Math.ceil(forecastData[idx].forecast * (1 + buf / 100)).toLocaleString();
+    });
+}
+document.querySelectorAll('input[name="buffer"]').forEach(el => el.addEventListener('change', refreshRecQty));
+
+// ── Drag-and-drop ───────────────────────────────────────────────────────────
+const zone = document.getElementById('upload-zone');
+zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('dragover'); });
+zone.addEventListener('dragleave', ()  => zone.classList.remove('dragover'));
+zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('dragover');
+    if (e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]);
+});
+document.getElementById('file-input').addEventListener('change', e => {
+    if (e.target.files[0]) processFile(e.target.files[0]);
+});
+
+// ── Upload ──────────────────────────────────────────────────────────────────
+const FIELD_LABELS = {
+    week:                  ['Week',                 'week number of the record'],
+    center_id:             ['Center / Outlet ID',    'which location the order belongs to'],
+    meal_id:               ['Meal / Item ID',        'which menu item was ordered'],
+    checkout_price:        ['Checkout Price',        'price the customer actually paid'],
+    base_price:            ['Base Price',            'list/regular price before discount'],
+    emailer_for_promotion: ['Email Promotion Flag',  '1/0 or yes/no'],
+    homepage_featured:     ['Homepage Featured Flag','1/0 or yes/no'],
+    num_orders:            ['Number of Orders',      'quantity sold'],
+    category:              ['Menu Category',         'optional — only needed for items not already in our trained data'],
+    cuisine:               ['Cuisine Type',           'optional — only needed for items not already in our trained data'],
+    item_name:             ['Item Name',              'optional — lets the AI assistant recognize items by name, not just ID'],
+};
+
+let pendingFile = null;
+
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    }[c]));
+}
+
+// Some uploaded item names already embed the meal id (e.g. "Iced Lemon Tea #2139"), since
+// that's a common real-world export format -- avoid re-appending "#id" a second time when
+// building a label, which would otherwise read as "Iced Lemon Tea #2139 #2139".
+function idSuffixFor(itemName, mealId) {
+    const tag = '#' + mealId;
+    return (itemName && String(itemName).includes(tag)) ? '' : ` ${tag}`;
+}
+
+function confidenceBadge(confidence, source) {
+    if (source === 'ai')        return '<span class="conf-badge conf-ai">AI suggested</span>';
+    if (confidence === 'high')  return '<span class="conf-badge conf-high">Matched</span>';
+    if (confidence === 'medium')return '<span class="conf-badge conf-medium">Confirm</span>';
+    if (confidence === 'low')   return '<span class="conf-badge conf-low">Low confidence</span>';
+    return '<span class="conf-badge conf-none">Not found</span>';
+}
+
+// ── Stage 1-2: upload + analyze headers ─────────────────────────────────────
+function processFile(file) {
+    hideError();
+    pendingFile = file;
+    const fd = new FormData();
+    fd.append('file', file);
+
+    document.getElementById('spinner').style.display = 'block';
+    startProgress(file.size);
+
+    fetch('/upload/analyze', { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('spinner').style.display = 'none';
+            stopProgress();
+            if (data.error) { showError(data.error, false); return; }
+            if (data.match) {
+                runCategoryCheck(file, mappingToColumnParam(data.mapping));
+            } else {
+                openMappingModal(data);
+            }
+        })
+        .catch(() => {
+            document.getElementById('spinner').style.display = 'none';
+            stopProgress();
+            showError('Something went wrong while reading your file. Please check the file and try again.', false);
+        });
+}
+
+function mappingToColumnParam(mapping) {
+    const out = {};
+    Object.entries(mapping || {}).forEach(([field, info]) => {
+        if (info && info.column) out[field] = info.column;
+    });
+    return out;
+}
+
+// ── Stage 3-4: confirm/fix column mapping ───────────────────────────────────
+function openMappingModal(data) {
+    const rows = document.getElementById('mapping-rows');
+    rows.innerHTML = '';
+    const mapping = data.mapping || {};
+
+    const renderRow = (field, isOptional) => {
+        const [label, hint] = FIELD_LABELS[field] || [field, ''];
+        const info    = mapping[field] || { column: null, confidence: 'none', source: null };
+        const matched = info.column || '';
+        const options = ['<option value="">— not in file —</option>']
+            .concat(data.columns.map(c =>
+                `<option value="${escapeHtml(c)}" ${c === matched ? 'selected' : ''}>${escapeHtml(c)}</option>`));
+
+        const row = document.createElement('div');
+        row.className = 'map-row' + (matched || isOptional ? '' : ' map-unmatched');
+        row.innerHTML = `
+            <div class="map-required">${escapeHtml(label)}${isOptional ? '<span class="map-optional-tag">Optional</span>' : ''}<small>${escapeHtml(hint)}</small></div>
+            <i class="bi bi-arrow-right map-arrow"></i>
+            <div class="map-select-wrap" style="display:flex;align-items:center;gap:8px;">
+                <select class="dark-select" data-field="${field}" data-optional="${isOptional ? '1' : '0'}"
+                        onchange="this.closest('.map-row').classList.toggle('map-unmatched', !this.value && this.dataset.optional !== '1')">
+                    ${options.join('')}
+                </select>
+                ${matched ? confidenceBadge(info.confidence, info.source) : ''}
+            </div>`;
+        rows.appendChild(row);
+    };
+
+    (data.required || []).forEach(f => renderRow(f, false));
+    (data.optional || []).forEach(f => renderRow(f, true));
+
+    document.getElementById('mapping-modal').classList.add('open');
+}
+
+function closeMappingModal() {
+    document.getElementById('mapping-modal').classList.remove('open');
+    pendingFile = null;
+}
+
+function confirmMapping() {
+    const mapping = {};
+    document.querySelectorAll('#mapping-rows select').forEach(sel => {
+        if (sel.value) mapping[sel.dataset.field] = sel.value;
+    });
+    const file = pendingFile;
+    document.getElementById('mapping-modal').classList.remove('open');
+    runCategoryCheck(file, mapping);
+}
+
+// ── Stage 6-7: normalize categories/cuisines against the trained vocabulary ─
+let pendingColumnMapping = null;
+
+function runCategoryCheck(file, columnMapping) {
+    pendingFile = file;
+    pendingColumnMapping = columnMapping;
+
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('column_mapping', JSON.stringify(columnMapping));
+
+    document.getElementById('spinner').style.display = 'block';
+    startProgress(file.size);
+
+    fetch('/upload/normalize-categories', { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('spinner').style.display = 'none';
+            stopProgress();
+            if (data.error) { showError(data.error, false); return; }
+            if (data.needs_review) {
+                openReviewModal(data);
+            } else {
+                doUpload(file, columnMapping, {}, {});
+            }
+        })
+        .catch(() => {
+            document.getElementById('spinner').style.display = 'none';
+            stopProgress();
+            showError('Something went wrong while checking your categories. Please try again.', false);
+        });
+}
+
+function reviewSelectRow(rawValue, suggested, confidence, source, vocab, opts) {
+    opts = opts || {};
+    const dataKey    = opts.dataKey !== undefined ? opts.dataKey : rawValue;
+    const label      = opts.label || `"${escapeHtml(rawValue)}"`;
+    const blankLabel = opts.blankLabel || '— exclude these rows —';
+    const options = [`<option value="">${escapeHtml(blankLabel)}</option>`]
+        .concat(vocab.map(v =>
+            `<option value="${escapeHtml(v)}" ${v === suggested ? 'selected' : ''}>${escapeHtml(v)}</option>`));
+    const badge = opts.hideBadge ? '' : (suggested ? confidenceBadge(confidence, source) : confidenceBadge('none', null));
+    const row = document.createElement('div');
+    row.className = 'review-row';
+    row.innerHTML = `
+        <div class="review-raw" title="${escapeHtml(String(rawValue))}">${label}</div>
+        <i class="bi bi-arrow-right review-arrow"></i>
+        <div class="review-select-wrap">
+            <select class="dark-select" data-raw="${escapeHtml(dataKey)}">${options.join('')}</select>
+            ${badge}
+        </div>`;
+    return row;
+}
+
+function cuisineDefaultRow(item, vocab) {
+    const options = vocab.map(v =>
+        `<option value="${escapeHtml(v)}" ${v === item.suggested ? 'selected' : ''}>${escapeHtml(v)}</option>`);
+    const badge = item.is_default
+        ? '<span class="conf-badge conf-medium">Default</span>'
+        : '<span class="conf-badge conf-ai">Suggested</span>';
+    const catSub = item.category ? `<span class="review-cat-sub">${escapeHtml(item.category)}</span>` : '';
+    const row = document.createElement('div');
+    row.className = 'review-row review-row-tall';
+    row.innerHTML = `
+        <div class="review-raw" title="Item #${item.meal_id}">Item #${item.meal_id}${catSub}</div>
+        <i class="bi bi-arrow-right review-arrow"></i>
+        <div class="review-select-col">
+            <div class="review-select-line">
+                <select class="dark-select" data-meal-id="${item.meal_id}">${options.join('')}</select>
+                ${badge}
+            </div>
+            <div class="review-reason">${escapeHtml(item.reason)}</div>
+        </div>`;
+    return row;
+}
+
+function openReviewModal(data) {
+    const notices = document.getElementById('review-notices');
+    notices.innerHTML = '';
+
+    const newItemCount = data.unknown_meal_ids.length;
+    if (newItemCount) {
+        const isPl = newItemCount !== 1;
+        notices.innerHTML += `
+            <div class="review-notice"><i class="bi bi-stars"></i>
+            <div>${newItemCount} menu item${isPl ? 's are' : ' is'} new to ForecastIQ. Once resolved below, we'll estimate demand using ${isPl ? 'their' : 'its'}
+            category, price, promotion settings, location, and the sales history in your upload — these estimates start from a wider confidence range than items ForecastIQ has trained on, and get more precise as you upload more history for ${isPl ? 'them' : 'it'}.</div></div>`;
+    }
+    if (data.unresolvable_meal_ids.length) {
+        notices.innerHTML += `
+            <div class="review-notice"><i class="bi bi-x-octagon-fill"></i>
+            <div>${data.unresolvable_meal_ids.length} item(s) have no category info at all in your file, so they can't be matched — those rows will be excluded from this forecast.</div></div>`;
+    }
+    if (data.unknown_center_ids.length) {
+        notices.innerHTML += `
+            <div class="review-notice"><i class="bi bi-geo-alt-fill"></i>
+            <div>Center ID${data.unknown_center_ids.length === 1 ? '' : 's'} ${data.unknown_center_ids.map(escapeHtml).join(', ')} ${data.unknown_center_ids.length === 1 ? "isn't" : "aren't"} in our trained dataset and can't be resolved — those rows will be excluded.</div></div>`;
+    }
+    const cuisineDefaults = data.cuisine_defaults || [];
+    if (cuisineDefaults.length) {
+        const isPl = cuisineDefaults.length !== 1;
+        notices.innerHTML += `
+            <div class="review-notice"><i class="bi bi-info-circle-fill"></i>
+            <div>${cuisineDefaults.length} item${isPl ? 's' : ''} ${isPl ? 'have' : 'has'} no cuisine type in your file. ForecastIQ has suggested a cuisine based on similar menu items and the trained data. You can keep the suggestion${isPl ? 's' : ''} or choose another trained cuisine value.</div></div>`;
+    }
+
+    const catSection = document.getElementById('review-category-section');
+    const catRows    = document.getElementById('review-category-rows');
+    catRows.innerHTML = '';
+    if (data.category_suggestions.length) {
+        catSection.style.display = 'block';
+        data.category_suggestions.forEach(s =>
+            catRows.appendChild(reviewSelectRow(s.raw_value, s.suggested, s.confidence, s.source, data.categories_vocab)));
+    } else {
+        catSection.style.display = 'none';
+    }
+
+    const cuiSection     = document.getElementById('review-cuisine-section');
+    const cuiRows        = document.getElementById('review-cuisine-rows');
+    const cuiDefaultRows = document.getElementById('review-cuisine-defaults-rows');
+    cuiRows.innerHTML = '';
+    cuiDefaultRows.innerHTML = '';
+    if (data.cuisine_suggestions.length) {
+        data.cuisine_suggestions.forEach(s =>
+            cuiRows.appendChild(reviewSelectRow(s.raw_value, s.suggested, s.confidence, s.source, data.cuisines_vocab)));
+    }
+    cuisineDefaults.forEach(item => cuiDefaultRows.appendChild(cuisineDefaultRow(item, data.cuisines_vocab)));
+    cuiSection.style.display = (data.cuisine_suggestions.length || cuisineDefaults.length) ? 'block' : 'none';
+
+    document.getElementById('review-modal').classList.add('open');
+}
+
+function closeReviewModal() {
+    document.getElementById('review-modal').classList.remove('open');
+    pendingFile = null;
+}
+
+function confirmCategoryReview() {
+    const categoryMapping = {};
+    document.querySelectorAll('#review-category-rows select').forEach(sel => {
+        if (sel.value) categoryMapping[sel.dataset.raw] = sel.value;
+    });
+    const cuisineMapping = {};
+    document.querySelectorAll('#review-cuisine-rows select').forEach(sel => {
+        if (sel.value) cuisineMapping[sel.dataset.raw] = sel.value;
+    });
+    const cuisineMealDefaults = {};
+    document.querySelectorAll('#review-cuisine-defaults-rows select').forEach(sel => {
+        if (sel.value) cuisineMealDefaults[sel.dataset.mealId] = sel.value;
+    });
+
+    const file = pendingFile;
+    const columnMapping = pendingColumnMapping || {};
+    document.getElementById('review-modal').classList.remove('open');
+    doUpload(file, columnMapping, categoryMapping, cuisineMapping, cuisineMealDefaults);
+}
+
+// ── Stage 8: save ────────────────────────────────────────────────────────────
+function doUpload(file, columnMapping, categoryMapping, cuisineMapping, cuisineMealDefaults) {
+    const horizon = document.querySelector('input[name="horizon"]:checked').value;
+    const fd      = new FormData();
+    fd.append('file', file); fd.append('horizon', horizon);
+    if (columnMapping && Object.keys(columnMapping).length) fd.append('column_mapping', JSON.stringify(columnMapping));
+    if (categoryMapping && Object.keys(categoryMapping).length) fd.append('category_mapping', JSON.stringify(categoryMapping));
+    if (cuisineMapping && Object.keys(cuisineMapping).length) fd.append('cuisine_mapping', JSON.stringify(cuisineMapping));
+    if (cuisineMealDefaults && Object.keys(cuisineMealDefaults).length) fd.append('cuisine_meal_defaults', JSON.stringify(cuisineMealDefaults));
+
+    document.getElementById('spinner').style.display = 'block';
+    startProgress(file.size);
+    hideError();
+
+    fetch('/upload', { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(data => {
+            stopProgress();
+            setTimeout(() => {
+                document.getElementById('spinner').style.display = 'none';
+                if (data.error) { showError(data.error, data.template_hint || false); return; }
+                currentSessionId = data.session_id;
+                renderResults(data);
+            }, 400);
+        })
+        .catch(() => {
+            stopProgress();
+            document.getElementById('spinner').style.display = 'none';
+            showError('Something went wrong while processing your file. Please check the file and try again.', false);
+        });
+}
+
+function showError(msg, showTemplate) {
+    document.getElementById('upload-error-msg').textContent = msg;
+    document.getElementById('upload-error-template').style.display = showTemplate ? 'block' : 'none';
+    document.getElementById('upload-error').classList.add('visible');
+}
+function hideError() {
+    document.getElementById('upload-error').classList.remove('visible');
+    document.getElementById('upload-error-template').style.display = 'none';
+}
+
+// ── Render results ──────────────────────────────────────────────────────────
+function renderResults(data) {
+    animateCount(document.getElementById('stat-records'), data.summary.total_records);
+    animateCount(document.getElementById('stat-weeks'),   data.summary.weeks, 600);
+    animateCount(document.getElementById('stat-centers'), data.summary.centers, 700);
+    animateCount(document.getElementById('stat-meals'),   data.summary.meals, 800);
+
+    const histWeeks  = data.history.map(r => 'W' + r.week);
+    const histActual = data.history.map(r => r.num_orders);
+    const foreWeeks  = data.forecast.map(r => 'W' + r.week);
+    const foreVals   = data.forecast.map(r => r.forecast);
+    const foreMin    = data.forecast.map(r => Math.max(r.forecast_min ?? r.forecast, r.forecast * 0.80));
+    const foreMax    = data.forecast.map(r => Math.min(r.forecast_max ?? r.forecast, r.forecast * 1.20));
+
+    const nullFore = Array(foreWeeks.length).fill(null);
+    // Bridge: nulls for all history except last point, which connects to forecast
+    const lastHistVal = histActual.length ? histActual[histActual.length - 1] : null;
+    const bridge = [...Array(histWeeks.length - 1).fill(null), lastHistVal];
+
+    const trendDatasets = [
+        {
+            label: 'Historical Orders',
+            data: [...histActual, ...nullFore],
+            borderColor: ACCENT, backgroundColor: 'rgba(0,229,176,0.06)',
+            fill: true, tension: .38, pointRadius: 0, borderWidth: 2,
+        },
+        {
+            label: '_upper',
+            data: [...bridge, ...foreMax],
+            borderColor: 'transparent', backgroundColor: 'rgba(124,106,255,0.12)',
+            fill: '+1', tension: .38, pointRadius: 0,
+        },
+        {
+            label: '_lower',
+            data: [...bridge, ...foreMin],
+            borderColor: 'transparent', backgroundColor: 'transparent',
+            fill: false, tension: .38, pointRadius: 0,
+        },
+        {
+            label: 'AI Forecast',
+            data: [...bridge, ...foreVals],
+            borderColor: PURPLE, borderDash: [5,3],
+            backgroundColor: 'transparent',
+            fill: false, tension: .38, pointRadius: 4, borderWidth: 2,
+            pointBackgroundColor: PURPLE, pointBorderColor: 'transparent',
+        },
+    ];
+
+    if (trendChart) trendChart.destroy();
+    trendChart = new Chart(document.getElementById('trend-chart'), {
+        type: 'line',
+        data: { labels: [...histWeeks, ...foreWeeks], datasets: trendDatasets },
+        options: chartOpts()
+    });
+
+    if (mealsChart) mealsChart.destroy();
+    mealsChart = new Chart(document.getElementById('meals-chart'), {
+        type: 'bar',
+        data: {
+            labels: data.top_meals.map(m => m.display_name || `#${m.meal_id} ${m.category}`),
+            datasets: [{
+                label: 'Total Orders',
+                data: data.top_meals.map(m => m.total_orders),
+                backgroundColor: 'rgba(0,229,176,0.65)',
+                borderColor: ACCENT, borderWidth: 1, borderRadius: 5,
+            }]
+        },
+        options: barOpts()
+    });
+
+    forecastData = data.forecast_detail;
+    renderForecastTable(forecastData);
+    populateFilters();
+    updateDrilldown();
+    resetChatConversation();
+    updateChatContext(data);
+
+    showAccuracySection(data.forecast.map(r => r.week), foreVals);
+
+    document.getElementById('upload-section').style.display  = 'none';
+    document.getElementById('results-section').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function chartOpts() {
+    return {
+        responsive: true,
+        plugins: {
+            legend: {
+                labels: {
+                    color: '#a0aec0', boxWidth: 11, padding: 16,
+                    filter: item => !item.text.startsWith('_'),
+                }
+            },
+            tooltip: {
+                filter: item => !item.dataset.label.startsWith('_'),
+                callbacks: {
+                    label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y != null ? ctx.parsed.y.toLocaleString() : ''}`
+                }
+            }
+        },
+        scales: {
+            x: { ticks: { maxTicksLimit: 20, color: '#a0aec0' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+            y: { ticks: { color: '#a0aec0' }, grid: { color: 'rgba(255,255,255,0.04)' } }
+        }
+    };
+}
+function barOpts() {
+    return {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { ticks: { color: '#a0aec0', font: { size: 10 }, maxRotation: 40, minRotation: 30 }, grid: { display: false } },
+            y: { ticks: { maxTicksLimit: 5, color: '#a0aec0' }, grid: { color: 'rgba(255,255,255,0.04)' } }
+        }
+    };
+}
+
+// ── Forecast table (paginated) ───────────────────────────────────────────────
+const PAGE_SIZE = 50;
+let currentPage     = 0;
+let filteredIndices = [];
+let sortCol = 'week', sortDir = 1;
+let demandP33 = 0, demandP66 = 0, minForecastWeek = 0;
+
+function renderForecastTable(rows) {
+    // Compute demand percentile thresholds using only non-zero rows
+    const nonZero = [...rows].map(r => r.forecast).filter(v => v > 0).sort((a, b) => a - b);
+    demandP33 = nonZero.length ? nonZero[Math.floor(nonZero.length * 0.33)] : 1;
+    demandP66 = nonZero.length ? nonZero[Math.floor(nonZero.length * 0.66)] : 2;
+    minForecastWeek = rows.length ? Math.min(...rows.map(r => r.week)) : 0;
+
+    filteredIndices = rows.map((_, i) => i);
+    currentPage = 0;
+    applySort();
+}
+
+function renderPage() {
+    const tbody    = document.getElementById('forecast-tbody');
+    const bar      = document.getElementById('pagination-bar');
+    const pageInfo = document.getElementById('page-info');
+    const btnPrev  = document.getElementById('btn-prev');
+    const btnNext  = document.getElementById('btn-next');
+    const total    = filteredIndices.length;
+    const pages    = Math.ceil(total / PAGE_SIZE);
+    const start    = currentPage * PAGE_SIZE;
+    const end      = Math.min(start + PAGE_SIZE, total);
+    const buf      = getBuffer();
+
+    tbody.innerHTML = '';
+    for (let p = start; p < end; p++) {
+        const i   = filteredIndices[p];
+        const row = forecastData[i];
+        const recQty     = Math.ceil(row.forecast * (1 + buf / 100));
+        const displayVal = (row.override != null) ? row.override : row.forecast;
+
+        // Relative week label
+        const relWeek = row.week - minForecastWeek + 1;
+
+        // Location label
+        const centerType = row.center_type ? row.center_type.replace('TYPE_', 'Type ') : '';
+        const locationLabel = `Center #${row.center_id}${centerType ? `<span class="cell-sub">${centerType}</span>` : ''}`;
+
+        // Menu item label -- prefer the uploaded item name (e.g. "Paneer Rice Bowl #1109")
+        // over a bare "Meal #1109"; category moves into the subtext line when a name is shown.
+        const newItemTag = row.is_cold_start
+            ? `<span class="conf-badge conf-ai" style="margin-left:6px;" title="New item — estimated from its category, price, and any sales history you uploaded, not ForecastIQ's trained model.">Estimated</span>`
+            : '';
+        const primaryLabel = row.item_name || row.category || ('Item #' + row.meal_id);
+        const idTag = idSuffixFor(row.item_name, row.meal_id).trim();
+        const subParts = [row.item_name ? row.category : null, row.cuisine, idTag].filter(Boolean);
+        const menuLabel = `${escapeHtml(primaryLabel)}${newItemTag}<span class="cell-sub">${escapeHtml(subParts.join(' · '))}</span>`;
+
+        // Demand badge — 0-forecast rows are always Low
+        const demandCls   = row.forecast === 0 ? 'd-low' : row.forecast >= demandP66 ? 'd-high' : row.forecast >= demandP33 ? 'd-med' : 'd-low';
+        const demandLabel = row.forecast === 0 ? 'Low'   : row.forecast >= demandP66 ? 'High'   : row.forecast >= demandP33 ? 'Medium' : 'Low';
+
+        const featKey     = `${row.center_id}_${row.meal_id}`;
+        const isFeatured  = featuredItems.has(featKey);
+        const featuredBg  = isFeatured ? 'background:rgba(0,229,176,0.06);' : '';
+
+        const tr = document.createElement('tr');
+        tr.style.cssText = featuredBg;
+        tr.innerHTML = `
+            <td><span class="week-tag">Week ${relWeek}</span></td>
+            <td>${locationLabel}</td>
+            <td>${menuLabel}</td>
+            <td>
+                <span class="val-strong">${row.forecast.toLocaleString()}</span>
+                ${row.featured ? '<span style="font-size:.68rem;color:var(--accent);margin-left:4px;">featured</span>' : ''}
+                <span class="demand-badge ${demandCls}">${demandLabel}</span>
+                ${row.forecast_min != null && row.forecast_max != null && row.forecast_min !== row.forecast_max
+                    ? `<div style="font-size:.72rem;color:var(--text-muted);margin-top:2px;">${row.forecast_min.toLocaleString()}–${row.forecast_max.toLocaleString()}</div>`
+                    : ''}
+            </td>
+            <td><span class="val-green rec-qty">${recQty.toLocaleString()}</span></td>
+            <td>
+                <input type="number" class="override-input"
+                    data-idx="${i}" data-week="${row.week}"
+                    data-center="${row.center_id}" data-meal="${row.meal_id}"
+                    value="${displayVal}" min="0">
+                <div class="override-saved" id="saved-${i}">
+                    <i class="bi bi-check-circle-fill"></i> Saved
+                </div>
+            </td>
+            <td style="text-align:center;">
+                <button class="star-btn ${isFeatured ? 'star-on' : ''}"
+                        onclick="toggleFeatured('${featKey}', ${row.center_id}, ${row.meal_id})"
+                        title="${isFeatured ? 'Remove from featured' : 'Mark as featured this week'}">
+                    <i class="bi bi-star${isFeatured ? '-fill' : ''}"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    }
+
+    document.querySelectorAll('.override-input').forEach(input => {
+        input.addEventListener('change', function () {
+            const idx = this.dataset.idx;
+            fetch('/override', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    session_id: currentSessionId,
+                    week: parseInt(this.dataset.week),
+                    center_id: parseInt(this.dataset.center),
+                    meal_id: parseInt(this.dataset.meal),
+                    override: parseInt(this.value),
+                })
+            }).then(r => r.json()).then(d => {
+                if (d.ok) {
+                    const el = document.getElementById('saved-' + idx);
+                    el.style.display = 'block';
+                    setTimeout(() => el.style.display = 'none', 2000);
+                }
+            });
+        });
+    });
+
+    pageInfo.textContent = `Showing ${start + 1}–${end} of ${total.toLocaleString()} rows`;
+    btnPrev.disabled = currentPage === 0;
+    btnPrev.style.opacity = currentPage === 0 ? '.35' : '1';
+    btnNext.disabled = currentPage >= pages - 1;
+    btnNext.style.opacity = currentPage >= pages - 1 ? '.35' : '1';
+    bar.style.display = total > PAGE_SIZE ? 'flex' : 'none';
+}
+
+function changePage(dir) {
+    const pages = Math.ceil(filteredIndices.length / PAGE_SIZE);
+    currentPage = Math.max(0, Math.min(currentPage + dir, pages - 1));
+    renderPage();
+    document.getElementById('forecast-table').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Reset / nav ─────────────────────────────────────────────────────────────
+function askEndSession() {
+    document.getElementById('end-session-modal').classList.add('open');
+}
+
+function askLogout() {
+    document.getElementById('logout-modal').classList.add('open');
+}
+function closeLogoutModal(e) {
+    if (e && e.target !== document.getElementById('logout-modal')) return;
+    document.getElementById('logout-modal').classList.remove('open');
+}
+
+function closeEndSessionModal(e) {
+    if (e && e.target !== document.getElementById('end-session-modal')) return;
+    document.getElementById('end-session-modal').classList.remove('open');
+}
+
+function confirmEndSession() {
+    document.getElementById('end-session-modal').classList.remove('open');
+
+    // Destroy all charts
+    if (trendChart)     { trendChart.destroy(); trendChart = null; }
+    if (mealsChart)     { mealsChart.destroy(); mealsChart = null; }
+    if (drilldownChart) { drilldownChart.destroy(); drilldownChart = null; }
+    if (categoryChart)  { categoryChart.destroy();  categoryChart  = null; }
+
+    // Clear session data
+    forecastData      = [];
+    currentSessionId  = null;
+
+    // Wipe chat state completely
+    resetChatConversation();
+    chatContext  = {};
+    document.getElementById('chat-send').disabled = false;
+    const ctxBar = document.getElementById('chat-context-bar');
+    ctxBar.classList.remove('visible');
+    ctxBar.innerHTML = '';
+    if (chatOpen) toggleChat();
+
+    // Reset UI
+    document.getElementById('upload-section').style.display  = 'block';
+    document.getElementById('results-section').style.display = 'none';
+    document.getElementById('history-section').style.display = 'none';
+    document.getElementById('accuracy-section').style.display = 'none';
+    document.getElementById('featured-bar').style.display    = 'none';
+    featuredItems.clear();
+    document.getElementById('spinner').style.display         = 'none';
+    document.getElementById('file-input').value = '';
+    hideError();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+let historyPreviousSection = 'upload';
+
+function backToUpload() {
+    document.getElementById('history-section').style.display = 'none';
+    if (historyPreviousSection === 'results') {
+        document.getElementById('results-section').style.display = 'block';
+    } else {
+        document.getElementById('upload-section').style.display = 'block';
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── History ─────────────────────────────────────────────────────────────────
+function showHistory() {
+    const resultsVisible = document.getElementById('results-section').style.display !== 'none';
+    historyPreviousSection = resultsVisible ? 'results' : 'upload';
+    document.getElementById('upload-section').style.display  = 'none';
+    document.getElementById('results-section').style.display = 'none';
+    document.getElementById('history-section').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    fetch('/history').then(r => r.json()).then(rows => {
+        const tbody = document.getElementById('history-tbody');
+        const empty = document.getElementById('history-empty');
+        tbody.innerHTML = '';
+        if (!rows.length) { empty.style.display = 'block'; return; }
+        empty.style.display = 'none';
+        rows.forEach(s => {
+            const tr = document.createElement('tr');
+            tr.className = 'history-row';
+            tr.innerHTML = `
+                <td style="color:var(--text-muted);">${s.id}</td>
+                <td>${s.created_at.replace(' ', ' at ').replace(':00', '')}</td>
+                <td style="color:var(--accent);">${s.filename}</td>
+                <td>${s.total_records.toLocaleString()}</td>
+                <td>${s.weeks}</td>
+                <td>${s.centers}</td>
+                <td>${s.meals}</td>
+                <td><span class="week-tag">${s.horizon} Week${s.horizon > 1 ? 's' : ''}</span></td>
+            `;
+            tr.addEventListener('click', () => loadSession(s.id));
+            tbody.appendChild(tr);
+        });
+    });
+}
+
+// ── Load session ─────────────────────────────────────────────────────────────
+function loadSession(id) {
+    fetch('/session/' + id).then(r => r.json()).then(data => {
+        if (data.error) { alert(data.error); return; }
+        const s = data.session;
+        currentSessionId = s.id;
+
+        // A different session's data is about to replace whatever's on screen -- any chat
+        // transcript from before this point references the OLD dataset and must not be
+        // resent to /chat alongside this one. Server-side context rebuild (via session_id)
+        // handles the grounding; this just clears the visible/replayed conversation and
+        // seeds the context bar/chips so they don't sit stale until the first message.
+        resetChatConversation();
+        updateChatContext({
+            summary: { total_records: s.total_records, weeks: s.weeks, centers: s.centers, meals: s.meals },
+            top_meals: [], forecast: [], forecast_top_next_week: [], forecast_bottom_next_week: [], forecast_by_category: [],
+        });
+
+        animateCount(document.getElementById('stat-records'), s.total_records);
+        animateCount(document.getElementById('stat-weeks'),   s.weeks, 600);
+        animateCount(document.getElementById('stat-centers'), s.centers, 700);
+        animateCount(document.getElementById('stat-meals'),   s.meals, 800);
+
+        forecastData = data.forecasts.map(r => ({
+            week: r.week, center_id: r.center_id, meal_id: r.meal_id,
+            category: r.category, cuisine: r.cuisine,
+            item_name: r.item_name ?? null, is_cold_start: !!r.is_cold_start,
+            forecast: r.ai_forecast, override: r.override_value,
+            lstm_forecast: r.lstm_forecast ?? null,
+            forecast_min: r.forecast_min ?? r.ai_forecast,
+            forecast_max: r.forecast_max ?? r.ai_forecast,
+        }));
+        renderForecastTable(forecastData);
+
+        // Aggregate XGBoost and LSTM totals per week from stored forecast rows
+        const weekTotals = {}, lstmTotals = {};
+        const hasLstmRows = data.forecasts.some(r => r.lstm_forecast != null);
+        data.forecasts.forEach(r => {
+            weekTotals[r.week] = (weekTotals[r.week] || 0) + r.ai_forecast;
+            if (hasLstmRows && r.lstm_forecast) lstmTotals[r.week] = (lstmTotals[r.week] || 0) + r.lstm_forecast;
+        });
+        const fw = Object.keys(weekTotals).sort((a, b) => a - b);
+        const fv = fw.map(w => weekTotals[w]);
+
+        // Restore history from saved JSON
+        const histData = s.history_json ? JSON.parse(s.history_json) : [];
+
+        // Compute weekly min/max from stored per-row data
+        const weekMin = {}, weekMax = {};
+        data.forecasts.forEach(r => {
+            const lo = r.forecast_min ?? r.ai_forecast;
+            const hi = r.forecast_max ?? r.ai_forecast;
+            weekMin[r.week] = (weekMin[r.week] || 0) + lo;
+            weekMax[r.week] = (weekMax[r.week] || 0) + hi;
+        });
+        const sessionForeMin = fw.map((w, i) => Math.max(weekMin[+w] || 0, fv[i] * 0.80));
+        const sessionForeMax = fw.map((w, i) => Math.min(weekMax[+w] || 0, fv[i] * 1.20));
+
+        const histWeeks  = histData.map(r => 'W' + r.week);
+        const histActual = histData.map(r => r.num_orders);
+        const foreWeeks  = fw.map(w => 'W' + w);
+        const nullFore   = Array(foreWeeks.length).fill(null);
+        const lastHistVal = histActual.length ? histActual[histActual.length - 1] : null;
+        const bridge     = [...Array(histWeeks.length - 1).fill(null), lastHistVal];
+
+        const trendDatasets = [];
+        if (histData.length) {
+            trendDatasets.push({
+                label: 'Historical Orders',
+                data: [...histActual, ...nullFore],
+                borderColor: ACCENT, backgroundColor: 'rgba(0,229,176,0.06)',
+                fill: true, tension: .38, pointRadius: 0, borderWidth: 2,
+            });
+        }
+        trendDatasets.push(
+            {
+                label: '_upper',
+                data: [...bridge, ...sessionForeMax],
+                borderColor: 'transparent', backgroundColor: 'rgba(124,106,255,0.12)',
+                fill: '+1', tension: .38, pointRadius: 0,
+            },
+            {
+                label: '_lower',
+                data: [...bridge, ...sessionForeMin],
+                borderColor: 'transparent', backgroundColor: 'transparent',
+                fill: false, tension: .38, pointRadius: 0,
+            },
+        );
+        trendDatasets.push({
+            label: 'AI Forecast',
+            data: [...bridge, ...fv],
+            borderColor: PURPLE, borderDash: [5, 3],
+            backgroundColor: 'transparent',
+            fill: false, tension: .38, pointRadius: 4, borderWidth: 2,
+            pointBackgroundColor: PURPLE, pointBorderColor: 'transparent',
+        });
+
+        if (trendChart) trendChart.destroy();
+        trendChart = new Chart(document.getElementById('trend-chart'), {
+            type: 'line',
+            data: { labels: [...histWeeks, ...foreWeeks], datasets: trendDatasets },
+            options: chartOpts()
+        });
+
+        const mealTotals = {};
+        forecastData.forEach(r => {
+            if (!mealTotals[r.meal_id]) mealTotals[r.meal_id] = { meal_id: r.meal_id, category: r.category, item_name: r.item_name, total: 0 };
+            mealTotals[r.meal_id].total += r.forecast;
+        });
+        const topMeals = Object.values(mealTotals).sort((a,b) => b.total-a.total).slice(0,10);
+
+        if (mealsChart) mealsChart.destroy();
+        mealsChart = new Chart(document.getElementById('meals-chart'), {
+            type: 'bar',
+            data: { labels: topMeals.map(m => m.item_name || `#${m.meal_id} ${m.category||''}`), datasets: [{
+                label: 'Total Forecast', data: topMeals.map(m => m.total),
+                backgroundColor: 'rgba(0,229,176,0.65)', borderColor: ACCENT,
+                borderWidth: 1, borderRadius: 5,
+            }]},
+            options: barOpts()
+        });
+
+        populateFilters();
+        updateDrilldown();
+        showAccuracySection(fw.map(Number), fv);
+        document.getElementById('history-section').style.display = 'none';
+        document.getElementById('results-section').style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+}
+
+// ── Filters ──────────────────────────────────────────────────────────────────
+function populateFilters() {
+    const centers    = [...new Set(forecastData.map(r => r.center_id))].sort((a,b) => a-b);
+    const categories = [...new Set(forecastData.map(r => r.category).filter(Boolean))].sort();
+    const cuisines   = [...new Set(forecastData.map(r => r.cuisine).filter(Boolean))].sort();
+    const meals      = [...new Set(forecastData.map(r => r.meal_id))].sort((a,b) => a-b);
+
+    const cSel   = document.getElementById('filter-center');
+    const catSel = document.getElementById('filter-category');
+    const cuiSel = document.getElementById('filter-cuisine');
+    const ddC    = document.getElementById('dd-center');
+    const ddM    = document.getElementById('dd-meal');
+
+    cSel.innerHTML = '<option value="">All Locations</option>';
+    centers.forEach(c => {
+        const row = forecastData.find(r => r.center_id === c);
+        const type = row && row.center_type ? ' · ' + row.center_type.replace('TYPE_', 'Type ') : '';
+        cSel.innerHTML += `<option value="${c}">Center #${c}${type}</option>`;
+    });
+
+    catSel.innerHTML = '<option value="">All Categories</option>';
+    categories.forEach(c => catSel.innerHTML += `<option value="${c}">${c}</option>`);
+
+    cuiSel.innerHTML = '<option value="">All Cuisines</option>';
+    cuisines.forEach(c => cuiSel.innerHTML += `<option value="${c}">${c}</option>`);
+
+    ddC.innerHTML = '<option value="">All Locations</option>';
+    centers.forEach(c => ddC.innerHTML += `<option value="${c}">Center #${c}</option>`);
+
+    ddM.innerHTML = '<option value="">All Items</option>';
+    meals.forEach(m => {
+        const row  = forecastData.find(r => r.meal_id === m);
+        const cat  = row && row.category ? ` — ${row.category}` : '';
+        const name = row && row.item_name ? `${row.item_name}` : '';
+        const idTag = idSuffixFor(row && row.item_name, m);
+        ddM.innerHTML += `<option value="${m}">${escapeHtml(name)}${idTag}${escapeHtml(cat)}</option>`;
+    });
+
+    document.getElementById('filter-count').textContent = '';
+}
+
+function getDemandTier(forecast) {
+    if (forecast === 0)          return 'low';
+    if (forecast >= demandP66)   return 'high';
+    if (forecast >= demandP33)   return 'med';
+    return 'low';
+}
+
+function applyFilters() {
+    const center   = document.getElementById('filter-center').value;
+    const category = document.getElementById('filter-category').value;
+    const cuisine  = document.getElementById('filter-cuisine').value;
+    const priority = document.getElementById('filter-priority').value;
+    const query    = (document.getElementById('tbl-search').value || '').toLowerCase().trim();
+
+    filteredIndices = forecastData.reduce((acc, row, i) => {
+        const matchSearch = !query || [
+            row.category, row.cuisine, row.item_name,
+            String(row.center_id), String(row.meal_id),
+            row.center_type
+        ].some(v => v && v.toLowerCase().includes(query));
+
+        const show = matchSearch &&
+                     (!center   || String(row.center_id) === center) &&
+                     (!category || row.category === category)        &&
+                     (!cuisine  || row.cuisine  === cuisine)         &&
+                     (!priority || getDemandTier(row.forecast) === priority);
+        if (show) acc.push(i);
+        return acc;
+    }, []);
+
+    currentPage = 0;
+    applySort();
+    const hasFilter = center || category || cuisine || priority || query;
+    document.getElementById('filter-count').textContent = hasFilter
+        ? `${filteredIndices.length.toLocaleString()} of ${forecastData.length.toLocaleString()} rows` : '';
+}
+
+function clearFilters() {
+    document.getElementById('filter-center').value   = '';
+    document.getElementById('filter-category').value = '';
+    document.getElementById('filter-cuisine').value  = '';
+    document.getElementById('filter-priority').value = '';
+    document.getElementById('tbl-search').value      = '';
+    applyFilters();
+}
+
+// ── Sort ─────────────────────────────────────────────────────────────────────
+function sortTable(col) {
+    if (sortCol === col) { sortDir *= -1; } else { sortCol = col; sortDir = 1; }
+    ['week','forecast','recqty'].forEach(c => {
+        const th = document.getElementById('th-' + c);
+        if (th) { th.classList.remove('sort-active'); th.querySelector('.sort-icon').textContent = '↕'; }
+    });
+    const active = document.getElementById('th-' + col);
+    if (active) {
+        active.classList.add('sort-active');
+        active.querySelector('.sort-icon').textContent = sortDir === 1 ? '↑' : '↓';
+    }
+    applySort();
+}
+
+function applySort() {
+    const buf = getBuffer();
+    filteredIndices.sort((a, b) => {
+        const ra = forecastData[a], rb = forecastData[b];
+        let va, vb;
+        if (sortCol === 'week')     { va = ra.week;    vb = rb.week; }
+        else if (sortCol === 'forecast') { va = ra.forecast; vb = rb.forecast; }
+        else if (sortCol === 'recqty')   { va = Math.ceil(ra.forecast * (1 + buf/100)); vb = Math.ceil(rb.forecast * (1 + buf/100)); }
+        else { va = ra.week; vb = rb.week; }
+        return (va - vb) * sortDir;
+    });
+    renderPage();
+}
+
+// ── Drilldown chart ───────────────────────────────────────────────────────────
+const DD_PALETTE = ['#00e5b0','#7c6aff','#ff6b6b','#ffd166','#06d6a0','#118ab2','#ef476f','#ffc857','#44cf6c','#e76f51'];
+
+function updateDrilldown() {
+    const center = document.getElementById('dd-center').value;
+    const meal   = document.getElementById('dd-meal').value;
+
+    let rows = forecastData;
+    if (center) rows = rows.filter(r => String(r.center_id) === center);
+    if (meal)   rows = rows.filter(r => String(r.meal_id)   === meal);
+
+    // Weekly totals for bar chart
+    const weekMap = {};
+    rows.forEach(r => { weekMap[r.week] = (weekMap[r.week] || 0) + r.forecast; });
+    const weeks = Object.keys(weekMap).sort((a,b) => a - b);
+    const vals  = weeks.map(w => weekMap[w]);
+
+    let label = 'All locations & items';
+    if (center && meal) label = `Location ${center} · Item ${meal}`;
+    else if (center)    label = `Location ${center} — all menu items`;
+    else if (meal)      label = `Item ${meal} — all locations`;
+    document.getElementById('dd-label').textContent = label;
+
+    if (drilldownChart) drilldownChart.destroy();
+    drilldownChart = new Chart(document.getElementById('drilldown-chart'), {
+        type: 'bar',
+        data: {
+            labels: weeks.map(w => 'W' + w),
+            datasets: [{
+                label: 'Forecasted Orders',
+                data: vals,
+                backgroundColor: 'rgba(124,106,255,0.55)',
+                borderColor: PURPLE,
+                borderWidth: 1,
+                borderRadius: 5,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false },
+                       tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y.toLocaleString()} orders` } } },
+            scales: {
+                x: { ticks: { color: '#a0aec0' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+                y: { ticks: { color: '#a0aec0', maxTicksLimit: 5 }, grid: { color: 'rgba(255,255,255,0.04)' } }
+            }
+        }
+    });
+
+    // Category breakdown for doughnut
+    const catMap = {};
+    rows.forEach(r => { const c = r.category || 'Other'; catMap[c] = (catMap[c] || 0) + r.forecast; });
+    const cats    = Object.keys(catMap).sort();
+    const catVals = cats.map(c => catMap[c]);
+
+    if (categoryChart) categoryChart.destroy();
+    categoryChart = new Chart(document.getElementById('category-chart'), {
+        type: 'doughnut',
+        data: {
+            labels: cats,
+            datasets: [{
+                data: catVals,
+                backgroundColor: DD_PALETTE.slice(0, cats.length),
+                borderColor: 'rgba(255,255,255,0.07)',
+                borderWidth: 2,
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { color: '#a0aec0', padding: 10,
+                           font: { size: 11 }, boxWidth: 10 } },
+                tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed.toLocaleString()} orders` } }
+            }
+        }
+    });
+}
+
+// ── PDF export ────────────────────────────────────────────────────────────────
+function downloadPDF() {
+    window.print();
+}
+
+// ── Chat ─────────────────────────────────────────────────────────────────────
+let chatOpen      = false;
+let chatHistory   = [];
+let chatContext   = {};
+let chatStreaming  = false;
+let welcomeShown  = false;
+
+const WELCOME = "Hi! I'm your ForecastIQ Assistant 👋\n\nUpload your sales data and I can help you interpret the forecasts, understand demand trends, and find ways to reduce food waste. What would you like to know?";
+
+const CHIPS_NO_DATA = [
+    'How does the AI forecasting work?',
+    'What file format do I need?',
+    'How accurate are the models?',
+    'How can AI help reduce food waste?',
+];
+const CHIPS_WITH_DATA = [
+    'Show top 10 meals chart',
+    'Category demand breakdown',
+    'Weekly forecast trend',
+    'Bottom 10 lowest demand items',
+    'Which items should I stock most next week?',
+    'Cuisine type breakdown',
+];
+
+function updateChips() {
+    const container = document.getElementById('chat-chips');
+    const chips = chatContext.summary ? CHIPS_WITH_DATA : CHIPS_NO_DATA;
+    container.innerHTML = chips.map(c =>
+        `<button class="chat-chip" onclick="sendChip(this)">${c}</button>`
+    ).join('');
+}
+
+function sendChip(btn) {
+    const text = btn.textContent;
+    const input = document.getElementById('chat-input');
+    input.value = text;
+    input.style.height = 'auto';
+    sendChatMessage();
+}
+
+function toggleChat() {
+    chatOpen = !chatOpen;
+    document.getElementById('chat-sidebar').classList.toggle('open', chatOpen);
+    document.getElementById('chat-backdrop').classList.toggle('open', chatOpen);
+    if (chatOpen && !welcomeShown) {
+        welcomeShown = true;
+        appendMsg('ai', WELCOME);
+        updateChips();
+    }
+    if (chatOpen) setTimeout(() => document.getElementById('chat-input').focus(), 340);
+}
+
+function toggleChatExpand() {
+    const sidebar = document.getElementById('chat-sidebar');
+    const btn     = document.getElementById('chat-expand-btn');
+    const expanded = sidebar.classList.toggle('expanded');
+    btn.innerHTML = expanded ? '<i class="bi bi-arrows-angle-contract"></i>' : '<i class="bi bi-arrows-fullscreen"></i>';
+    btn.title     = expanded ? 'Shrink' : 'Expand';
+}
+
+// Clears the conversation transcript (but not chatContext -- callers set that separately
+// via updateChatContext) so switching datasets (a new upload, or loading a past session)
+// can't leave old messages sitting in chatHistory to get resent alongside new grounding data.
+function resetChatConversation() {
+    chatHistory   = [];
+    chatStreaming = false;
+    welcomeShown  = false;
+    document.getElementById('chat-messages').innerHTML = '';
+    updateChips();
+}
+
+function updateChatContext(data) {
+    chatContext = {
+        summary:                data.summary,
+        top_meals:              data.top_meals,
+        forecast:               data.forecast,
+        forecast_top_next_week:    data.forecast_top_next_week    || [],
+        forecast_bottom_next_week: data.forecast_bottom_next_week || [],
+        forecast_by_category:      data.forecast_by_category      || [],
+    };
+    const bar = document.getElementById('chat-context-bar');
+    const s   = data.summary;
+    if (s) {
+        bar.innerHTML =
+            `<strong>Session loaded</strong> &mdash; `
+            + `${s.total_records.toLocaleString()} records &nbsp;·&nbsp; `
+            + `${s.weeks} weeks &nbsp;·&nbsp; `
+            + `${s.centers} locations &nbsp;·&nbsp; `
+            + `${s.meals} menu items`;
+        bar.classList.add('visible');
+    }
+    updateChips();
+}
+
+function appendMsg(role, text) {
+    const msgs = document.getElementById('chat-messages');
+    const wrap = document.createElement('div');
+    wrap.className = `chat-msg ${role}`;
+    const icon = role === 'ai' ? 'bi-stars' : 'bi-person-fill';
+    wrap.innerHTML = `
+        <div class="chat-avatar"><i class="bi ${icon}"></i></div>
+        <div class="chat-bubble"></div>`;
+    const bubble = wrap.querySelector('.chat-bubble');
+    bubble.innerHTML = renderMd(text);
+    msgs.appendChild(wrap);
+    msgs.scrollTop = msgs.scrollHeight;
+    return bubble;
+}
+
+function expandChatForChart() {
+    const sidebar = document.getElementById('chat-sidebar');
+    if (sidebar.classList.contains('expanded')) return;
+    sidebar.classList.add('expanded');
+    const btn = document.getElementById('chat-expand-btn');
+    btn.innerHTML = '<i class="bi bi-arrows-angle-contract"></i>';
+    btn.title     = 'Shrink';
+}
+
+// Same dark-theme tick/grid/tooltip/legend polish the main dashboard charts use
+// (see chartOpts() above) — chat charts previously fell back to bare Chart.js
+// defaults, which is why they looked plainer than the dashboard. Scales only
+// apply to cartesian chart types (bar/line) — doughnut/pie have no axes, and
+// injecting a `scales` block for them makes Chart.js draw a bogus cartesian
+// grid underneath the circle.
+function chatChartDefaults(type) {
+    const defaults = {
+        plugins: {
+            legend: { labels: { color: '#a0aec0', boxWidth: 11, padding: 14 } },
+            tooltip: {
+                callbacks: {
+                    label: ctx => {
+                        // ctx.raw is the literal value from dataset.data[index], independent of
+                        // orientation -- ctx.parsed.x/.y flip meaning for horizontal bars
+                        // (indexAxis:'y', used by the location/meal ranking charts), where the
+                        // value lives on .x and .y is just the category's index position, so
+                        // reading .y unconditionally showed the row index (0, 1, 2...) instead
+                        // of the actual order count.
+                        const raw    = ctx.raw;
+                        const val    = typeof raw === 'number' ? raw.toLocaleString() : raw;
+                        const prefix = ctx.dataset.label || ctx.label || '';
+                        return prefix ? ` ${prefix}: ${val}` : ` ${val}`;
+                    },
+                },
+            },
+        },
+    };
+    if (type === 'bar' || type === 'line') {
+        defaults.scales = {
+            x: { ticks: { color: '#a0aec0' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+            y: { ticks: { color: '#a0aec0' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        };
+    }
+    return defaults;
+}
+
+// Recursively fills gaps in `overrides` (the chart-specific options the backend already
+// picked, e.g. legend.display:false for bars, cutout for the doughnut) using `defaults`,
+// without clobbering anything the backend explicitly set.
+function deepMergeChartOpts(defaults, overrides) {
+    const out = { ...defaults };
+    for (const key of Object.keys(overrides || {})) {
+        const a = defaults[key], b = overrides[key];
+        const bothPlainObjects = b && typeof b === 'object' && !Array.isArray(b)
+            && a && typeof a === 'object' && !Array.isArray(a);
+        out[key] = bothPlainObjects ? deepMergeChartOpts(a, b) : b;
+    }
+    return out;
+}
+
+// Charts with many bars/series need more room than a quick 3-item comparison —
+// scale the canvas height to what's actually being shown instead of one fixed size.
+function chatChartHeight(chartData) {
+    const seriesCount = (chartData.data.datasets || []).length;
+    const itemCount    = Math.max(
+        (chartData.data.labels || []).length,
+        (chartData.data.datasets?.[0]?.data || []).length,
+    );
+    if (chartData.type === 'bar')  return Math.min(560, Math.max(260, itemCount * 26));
+    if (chartData.type === 'line' && seriesCount > 5) return 380;
+    return 280;
+}
+
+// Flattens a chart's rendered labels/values into a short 'Label: value, ...' string --
+// mirrors the backend's chat_engine.chart_data_summary(). Used only to represent a
+// displayed chart inside chatHistory (see sendChatMessage) so a later turn's general
+// chat call has the chart's exact data in context, not just the prose that followed it.
+function chartSummaryForHistory(chartData, limit = 15) {
+    const labels   = chartData.data?.labels || [];
+    const datasets = chartData.data?.datasets || [];
+    if (!datasets.length) return '';
+    return datasets.map(ds => {
+        const values = ds.data || [];
+        const prefix = (ds.label && datasets.length > 1) ? `${ds.label} — ` : '';
+        const pairs  = labels.map((l, i) => `${l}: ${values[i]}`).slice(0, limit);
+        return prefix + pairs.join(', ');
+    }).join('; ');
+}
+
+function renderChartInChat(chartData) {
+    expandChatForChart();
+
+    const msgs = document.getElementById('chat-messages');
+    const wrap = document.createElement('div');
+    wrap.className = 'chat-msg ai';
+    const cid    = 'cc-' + Date.now();
+    const height = chatChartHeight(chartData);
+    wrap.innerHTML = `
+        <div class="chat-avatar"><i class="bi bi-bar-chart-fill"></i></div>
+        <div class="chat-bubble chart-bubble">
+            <div class="chart-label">${chartData.title || ''}</div>
+            <div style="position:relative;height:${height}px;"><canvas id="${cid}"></canvas></div>
+        </div>`;
+    msgs.appendChild(wrap);
+    msgs.scrollTop = msgs.scrollHeight;
+
+    const options = deepMergeChartOpts(chatChartDefaults(chartData.type), chartData.options || {});
+    options.responsive = true;
+    options.maintainAspectRatio = false;
+
+    new Chart(document.getElementById(cid), {
+        type: chartData.type,
+        data: chartData.data,
+        options,
+    });
+}
+
+function renderMd(text) {
+    return text
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+        .replace(/`([^`]+)`/g,'<code style="background:var(--surface-3);padding:1px 5px;border-radius:4px;font-family:monospace;font-size:.8em;">$1</code>')
+        .replace(/\n/g,'<br>');
+}
+
+function showTyping() {
+    const msgs = document.getElementById('chat-messages');
+    const wrap = document.createElement('div');
+    wrap.className = 'chat-msg ai'; wrap.id = 'chat-typing';
+    wrap.innerHTML = `<div class="chat-avatar"><i class="bi bi-stars"></i></div>
+        <div class="chat-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
+    msgs.appendChild(wrap);
+    msgs.scrollTop = msgs.scrollHeight;
+}
+
+function chatKeydown(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
+}
+
+// ── Voice input ───────────────────────────────────────────────────────────────
+let voiceRecognition   = null;
+let voiceListening     = false;
+let voiceStoppedByUser = false;
+let voiceFinalText     = '';
+let voiceFatalError    = false;
+let voiceSilenceTimer  = null;
+
+const VOICE_RECOVERABLE_ERRORS = new Set(['no-speech', 'aborted', 'network']);
+const VOICE_SILENCE_MS = 1500;  // auto-stop this long after the user goes quiet
+
+function clearSilenceTimer() {
+    if (voiceSilenceTimer) { clearTimeout(voiceSilenceTimer); voiceSilenceTimer = null; }
+}
+
+function armSilenceTimer() {
+    clearSilenceTimer();
+    voiceSilenceTimer = setTimeout(() => {
+        if (!voiceListening) return;
+        voiceStoppedByUser = true;  // treat "gone quiet" like a manual stop
+        try { voiceRecognition.stop(); } catch (err) { finishVoiceSession(); }
+    }, VOICE_SILENCE_MS);
+}
+
+function toggleVoice() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        flashMicMessage('Voice input needs Chrome or Edge.');
+        return;
+    }
+
+    if (voiceListening) {
+        clearSilenceTimer();
+        voiceStoppedByUser = true;
+        voiceRecognition.stop();
+        return;
+    }
+
+    hideVoiceConfirm();
+    clearSilenceTimer();
+    const inputEl = document.getElementById('chat-input');
+    voiceFinalText     = inputEl.value;  // preserve existing text
+    voiceStoppedByUser = false;
+    voiceFatalError    = false;
+
+    voiceRecognition = new SpeechRecognition();
+    voiceRecognition.lang            = 'en-US';
+    voiceRecognition.interimResults  = true;
+    voiceRecognition.continuous      = true;   // don't cut off on natural pauses
+    voiceRecognition.maxAlternatives = 1;
+
+    voiceRecognition.onstart = () => {
+        voiceListening = true;
+        const btn  = document.getElementById('chat-mic');
+        const icon = document.getElementById('mic-icon');
+        btn.classList.add('listening');
+        icon.className = 'bi bi-stop-fill';
+        inputEl.placeholder = 'Listening…';
+    };
+
+    voiceRecognition.onresult = e => {
+        let interim = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+            const transcript = e.results[i][0].transcript;
+            if (e.results[i].isFinal) {
+                voiceFinalText += (voiceFinalText ? ' ' : '') + transcript.trim();
+            } else {
+                interim = transcript;
+            }
+        }
+        inputEl.value = voiceFinalText + (interim ? ' ' + interim : '');
+        inputEl.dispatchEvent(new Event('input'));  // trigger auto-resize
+        armSilenceTimer();  // reset the "user went quiet" countdown on any new speech
+    };
+
+    voiceRecognition.onerror = e => {
+        if (!VOICE_RECOVERABLE_ERRORS.has(e.error)) {
+            clearSilenceTimer();
+            voiceFatalError    = true;
+            voiceStoppedByUser = true;  // don't try to auto-restart
+            flashMicMessage(
+                e.error === 'not-allowed' || e.error === 'service-not-allowed'
+                    ? 'Microphone access blocked — check browser permissions.'
+                    : 'Voice input error — please try again.'
+            );
+        }
+        // recoverable errors (no-speech, brief network hiccups) fall through
+        // to onend, which restarts listening automatically.
+    };
+
+    // Chrome/Edge often end a "continuous" session after a silence gap even
+    // though we asked for continuous=true. If the user didn't ask us to stop
+    // and there was no fatal error, just resume listening transparently.
+    voiceRecognition.onend = () => {
+        if (!voiceStoppedByUser && !voiceFatalError) {
+            try { voiceRecognition.start(); return; } catch (err) { /* fall through */ }
+        }
+        finishVoiceSession();
+    };
+
+    voiceRecognition.start();
+}
+
+function finishVoiceSession() {
+    clearSilenceTimer();
+    voiceListening = false;
+    const btn  = document.getElementById('chat-mic');
+    const icon = document.getElementById('mic-icon');
+    const inp  = document.getElementById('chat-input');
+    btn.classList.remove('listening');
+    icon.className  = 'bi bi-mic-fill';
+    inp.placeholder = 'Ask about your forecasts…';
+
+    if (voiceFinalText.trim()) showVoiceConfirm();
+}
+
+function flashMicMessage(msg) {
+    const inp = document.getElementById('chat-input');
+    inp.placeholder = msg;
+    setTimeout(() => { if (!voiceListening) inp.placeholder = 'Ask about your forecasts…'; }, 3000);
+}
+
+function showVoiceConfirm() {
+    document.getElementById('voice-confirm-bar').classList.add('visible');
+}
+function hideVoiceConfirm() {
+    document.getElementById('voice-confirm-bar').classList.remove('visible');
+}
+function voiceConfirmSend() {
+    hideVoiceConfirm();
+    sendChatMessage();
+}
+function voiceConfirmEdit() {
+    hideVoiceConfirm();
+    const inputEl = document.getElementById('chat-input');
+    inputEl.focus();
+    inputEl.setSelectionRange(inputEl.value.length, inputEl.value.length);
+}
+function voiceConfirmRetry() {
+    hideVoiceConfirm();
+    const inputEl = document.getElementById('chat-input');
+    inputEl.value = '';  // discard the wrong transcription, start clean
+    inputEl.dispatchEvent(new Event('input'));
+    toggleVoice();  // voiceListening is false here, so this starts a fresh recording
+}
+
+async function sendChatMessage() {
+    if (chatStreaming) return;
+    const input = document.getElementById('chat-input');
+    const text  = input.value.trim();
+    if (!text) return;
+
+    hideVoiceConfirm();
+    input.value = ''; input.style.height = 'auto';
+    appendMsg('user', text);
+    chatHistory.push({ role: 'user', content: text });
+
+    showTyping();
+    chatStreaming = true;
+    document.getElementById('chat-send').disabled = true;
+
+    try {
+        const resp = await fetch('/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messages: chatHistory, context: chatContext, session_id: currentSessionId }),
+        });
+
+        document.getElementById('chat-typing')?.remove();
+
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            appendMsg('ai', '⚠ ' + (err.error || 'Server error. Please try again.'));
+            chatStreaming = false;
+            document.getElementById('chat-send').disabled = false;
+            return;
+        }
+
+        let bubble = null;
+        const msgs   = document.getElementById('chat-messages');
+        const reader = resp.body.getReader();
+        const dec    = new TextDecoder();
+        let buf = '', fullText = '', streamDone = false, chartForHistory = null;
+
+        while (!streamDone) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buf += dec.decode(value, { stream: true });
+            const lines = buf.split('\n'); buf = lines.pop();
+            for (const line of lines) {
+                if (!line.startsWith('data: ')) continue;
+                const payload = line.slice(6).trim();
+                if (payload === '[DONE]') { streamDone = true; break; }
+                try {
+                    const obj = JSON.parse(payload);
+                    if (obj.error) {
+                        if (!bubble) bubble = appendMsg('ai', '');
+                        fullText = '⚠ ' + obj.error;
+                        bubble.innerHTML = renderMd(fullText);
+                        streamDone = true; break;
+                    }
+                    if (obj.chart) { renderChartInChat(obj.chart); chartForHistory = obj.chart; continue; }
+                    if (obj.delta) {
+                        if (!bubble) bubble = appendMsg('ai', '');
+                        fullText += obj.delta;
+                        bubble.innerHTML = renderMd(fullText);
+                        msgs.scrollTop = msgs.scrollHeight;
+                    }
+                } catch {}
+            }
+        }
+        if (bubble) bubble.innerHTML = renderMd(fullText);
+
+        // The displayed bubble only ever shows `fullText` (the prose) -- but a chart
+        // rendered this turn is represented here too, invisibly, so a later turn's
+        // general chat call (see /chat's non-grounded fallback) has the chart's exact
+        // labels/values in context and not just the commentary that followed it.
+        const historyContent = chartForHistory
+            ? `[Chart shown: "${chartForHistory.title || ''}" — ${chartSummaryForHistory(chartForHistory)}]\n${fullText}`
+            : fullText;
+        chatHistory.push({ role: 'assistant', content: historyContent });
+
+    } catch {
+        document.getElementById('chat-typing')?.remove();
+        appendMsg('ai', '⚠ Connection error. Please try again.');
+    }
+
+    chatStreaming = false;
+    document.getElementById('chat-send').disabled = false;
+}
+
+document.getElementById('chat-input').addEventListener('input', function () {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 110) + 'px';
+    if (!voiceListening) hideVoiceConfirm();
+});
+
+// ── Featured items recalculation ─────────────────────────────────────────────
+function toggleFeatured(key, centerId, mealId) {
+    if (featuredItems.has(key)) {
+        featuredItems.delete(key);
+        // Revert rows for this item to their original values
+        forecastData.forEach(row => {
+            if (`${row.center_id}_${row.meal_id}` === key && row.forecast_original != null) {
+                row.forecast     = row.forecast_original;
+                row.forecast_min = row.forecast_min_original;
+                row.forecast_max = row.forecast_max_original;
+                row.featured     = false;
+                delete row.forecast_original;
+                delete row.forecast_min_original;
+                delete row.forecast_max_original;
+            }
+        });
+    } else {
+        featuredItems.add(key);
+    }
+    updateFeaturedBar();
+    renderPage();
+}
+
+function updateFeaturedBar() {
+    const bar = document.getElementById('featured-bar');
+    const count = featuredItems.size;
+    if (count > 0) {
+        document.getElementById('featured-count').textContent = count;
+        bar.style.display = 'flex';
+    } else {
+        bar.style.display = 'none';
+    }
+}
+
+function dismissFeaturedBar() {
+    document.getElementById('featured-bar').style.display = 'none';
+}
+
+function clearFeatured() {
+    featuredItems.clear();
+    forecastData.forEach(r => {
+        if (r.forecast_original != null) {
+            r.forecast     = r.forecast_original;
+            r.forecast_min = r.forecast_min_original;
+            r.forecast_max = r.forecast_max_original;
+            delete r.forecast_original;
+            delete r.forecast_min_original;
+            delete r.forecast_max_original;
+        }
+        r.featured = false;
+    });
+    updateFeaturedBar();
+    renderPage();
+}
+
+async function applyFeatured() {
+    if (!currentSessionId || featuredItems.size === 0) return;
+
+    const btn = document.getElementById('featured-recalc-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Recalculating…';
+
+    const items = [...featuredItems].map(key => {
+        const [center_id, meal_id] = key.split('_').map(Number);
+        return { center_id, meal_id };
+    });
+
+    try {
+        const res  = await fetch('/recalculate-featured', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: currentSessionId, items })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Recalculation failed');
+
+        // Update matching rows in forecastData, saving originals for revert
+        data.results.forEach(upd => {
+            forecastData.forEach(row => {
+                if (row.center_id === upd.center_id && row.meal_id === upd.meal_id && row.week === upd.week) {
+                    if (row.forecast_original == null) {
+                        row.forecast_original     = row.forecast;
+                        row.forecast_min_original = row.forecast_min;
+                        row.forecast_max_original = row.forecast_max;
+                    }
+                    row.forecast     = upd.forecast;
+                    row.forecast_min = upd.forecast_min;
+                    row.forecast_max = upd.forecast_max;
+                    row.featured     = true;
+                }
+            });
+        });
+
+        renderPage();
+    } catch (err) {
+        alert('Recalculation error: ' + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Recalculate';
+    }
+}
+
+// ── Download ─────────────────────────────────────────────────────────────────
+function downloadExcel() {
+    const buf  = getBuffer();
+    const rows = [['Week', 'Location', 'Menu Item', 'Category', 'Cuisine',
+                   'AI Forecast', 'Forecast Range', 'Recommended Qty', 'Adjustment']];
+    const minWeek = forecastData.length ? Math.min(...forecastData.map(r => r.week)) : 0;
+    filteredIndices.forEach(i => {
+        const r      = forecastData[i];
+        const rec    = Math.ceil(r.forecast * (1 + buf / 100));
+        const ov     = r.override != null ? r.override : r.forecast;
+        const relW   = r.week - minWeek + 1;
+        const range  = (r.forecast_min != null && r.forecast_max != null && r.forecast_min !== r.forecast_max)
+                       ? `${r.forecast_min}–${r.forecast_max}` : '';
+        const menuItemCell = `${r.item_name || ''}${idSuffixFor(r.item_name, r.meal_id)}`.trim() || `#${r.meal_id}`;
+        rows.push([`Week ${relW}`, `Center #${r.center_id}`, menuItemCell,
+                   r.category || '', r.cuisine || '', r.forecast, range, rec, ov]);
+    });
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [10,14,12,14,12,14,14,14,12].map(w => ({ wch: w }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Forecast');
+    XLSX.writeFile(wb, 'forecast_results.xlsx');
+}
+
+function downloadForecast() {
+    const buf    = getBuffer();
+    const header = 'week,location,menu_item,category,cuisine,ai_forecast,recommended_qty,adjustment';
+    const lines  = [header];
+    const csvCell = (v) => /[",\n]/.test(v) ? `"${String(v).replace(/"/g, '""')}"` : v;
+    filteredIndices.forEach(i => {
+        const r        = forecastData[i];
+        const rec      = Math.ceil(r.forecast * (1 + buf / 100));
+        const ov       = (r.override != null) ? r.override : r.forecast;
+        const menuItem = `${r.item_name || ''}${idSuffixFor(r.item_name, r.meal_id)}`.trim() || `#${r.meal_id}`;
+        lines.push([r.week, r.center_id, csvCell(menuItem), r.category||'', r.cuisine||'', r.forecast, rec, ov].join(','));
+    });
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+    const a    = document.createElement('a');
+    a.href     = URL.createObjectURL(blob);
+    a.download = 'forecast_results.csv';
+    a.click();
+}
+
+// ── Accuracy Tracker ─────────────────────────────────────────────────────────
+let accuracyChart = null;
+let _accuracyWeeks = [], _accuracyForecasts = [];
+
+function showAccuracySection(weeks, forecasts) {
+    _accuracyWeeks     = weeks;
+    _accuracyForecasts = forecasts;
+    const section = document.getElementById('accuracy-section');
+    section.style.display = 'block';
+
+    const container = document.getElementById('actuals-inputs');
+    container.innerHTML = '';
+    weeks.forEach((week, i) => {
+        container.innerHTML += `
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;flex-wrap:wrap;">
+                <span style="width:70px;font-size:.83rem;color:var(--text-muted);">Week ${i + 1}</span>
+                <span style="width:180px;font-size:.82rem;color:var(--text-soft);">
+                    Forecast: <strong style="color:var(--purple);">${forecasts[i].toLocaleString()}</strong>
+                </span>
+                <input type="number" class="override-input" id="actual-w-${week}"
+                       placeholder="Actual orders" min="0" style="width:170px;"
+                       data-week="${week}" data-forecast="${forecasts[i]}">
+            </div>`;
+    });
+
+    // Reset comparison
+    document.getElementById('accuracy-result').style.display = 'none';
+    if (accuracyChart) { accuracyChart.destroy(); accuracyChart = null; }
+
+    // Load any saved actuals for this session
+    if (currentSessionId) {
+        fetch('/actuals/' + currentSessionId).then(r => r.json()).then(rows => {
+            if (!rows.error && rows.length) {
+                rows.forEach(r => {
+                    const inp = document.getElementById('actual-w-' + r.week);
+                    if (inp) inp.value = r.actual_orders;
+                });
+                renderAccuracy();
+            }
+        });
+    }
+}
+
+function submitActuals() {
+    const inputs  = document.querySelectorAll('#actuals-inputs input[data-week]');
+    const actuals = [];
+    inputs.forEach(inp => {
+        const val = parseInt(inp.value);
+        if (!isNaN(val) && val >= 0)
+            actuals.push({ week: parseInt(inp.dataset.week), actual_orders: val });
+    });
+    if (!actuals.length) return;
+    fetch('/actuals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: currentSessionId, actuals }),
+    }).then(r => r.json()).then(d => { if (d.ok) renderAccuracy(); });
+}
+
+function renderAccuracy() {
+    const inputs = document.querySelectorAll('#actuals-inputs input[data-week]');
+    const labels = [], forecasts = [], actuals = [];
+    let sumAbsErr = 0, count = 0, totalForecast = 0, totalActual = 0;
+
+    inputs.forEach((inp, i) => {
+        const actual   = parseInt(inp.value);
+        const forecast = parseInt(inp.dataset.forecast);
+        if (!isNaN(actual) && actual > 0) {
+            labels.push('Week ' + (i + 1));
+            forecasts.push(forecast);
+            actuals.push(actual);
+            totalForecast += forecast;
+            totalActual   += actual;
+            sumAbsErr     += Math.abs(forecast - actual) / actual;
+            count++;
+        }
+    });
+    if (!count) return;
+
+    const mape     = (sumAbsErr / count * 100).toFixed(1);
+    const accuracy = Math.max(0, 100 - parseFloat(mape)).toFixed(1);
+    const accColor = parseFloat(accuracy) >= 90 ? 'var(--accent)'
+                   : parseFloat(accuracy) >= 75 ? 'var(--amber)'
+                   : 'var(--danger)';
+
+    document.getElementById('accuracy-result').style.display = 'block';
+
+    if (accuracyChart) accuracyChart.destroy();
+    accuracyChart = new Chart(document.getElementById('accuracy-chart'), {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+                { label: 'AI Forecast', data: forecasts,
+                  backgroundColor: 'rgba(124,106,255,0.65)', borderColor: PURPLE,
+                  borderWidth: 1, borderRadius: 5 },
+                { label: 'Actual Orders', data: actuals,
+                  backgroundColor: 'rgba(0,229,176,0.65)', borderColor: ACCENT,
+                  borderWidth: 1, borderRadius: 5 },
+            ],
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { labels: { color: '#a0aec0', boxWidth: 11, padding: 16 } } },
+            scales: {
+                x: { ticks: { color: '#a0aec0' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+                y: { ticks: { color: '#a0aec0', maxTicksLimit: 5 }, grid: { color: 'rgba(255,255,255,0.04)' } },
+            },
+        },
+    });
+
+    document.getElementById('accuracy-stats').innerHTML = `
+        <div class="stat-card" style="flex:1;min-width:130px;text-align:center;">
+            <div class="s-label">Forecast Accuracy</div>
+            <div class="s-value" style="color:${accColor};">${accuracy}%</div>
+        </div>
+        <div class="stat-card" style="flex:1;min-width:130px;text-align:center;">
+            <div class="s-label">Avg Error Rate</div>
+            <div class="s-value">${mape}%</div>
+        </div>
+        <div class="stat-card" style="flex:1;min-width:130px;text-align:center;">
+            <div class="s-label">Total Forecasted</div>
+            <div class="s-value" style="color:var(--purple);">${totalForecast.toLocaleString()}</div>
+        </div>
+        <div class="stat-card" style="flex:1;min-width:130px;text-align:center;">
+            <div class="s-label">Total Actual</div>
+            <div class="s-value" style="color:var(--accent);">${totalActual.toLocaleString()}</div>
+        </div>`;
+}
+
+// Close modals on Escape
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeEndSessionModal();
+});
+
+/* ── Interactive design enhancements ── */
+
+// Cursor glow follower
+(function() {
+    const glow = document.createElement('div');
+    glow.className = 'cursor-glow';
+    document.body.appendChild(glow);
+    let tx = -9999, ty = -9999, cx = -9999, cy = -9999, active = false;
+    window.addEventListener('mousemove', e => {
+        tx = e.clientX; ty = e.clientY;
+        if (!active) { glow.style.opacity = '1'; active = true; }
+    });
+    window.addEventListener('mouseleave', () => { glow.style.opacity = '0'; active = false; });
+    (function tick() {
+        cx += (tx - cx) * 0.07;
+        cy += (ty - cy) * 0.07;
+        glow.style.left = cx + 'px';
+        glow.style.top  = cy + 'px';
+        requestAnimationFrame(tick);
+    })();
+})();
+
+// Card 3D tilt effect
+document.querySelectorAll('.stat-card, .chart-card, .card-dark').forEach(card => {
+    card.addEventListener('mouseenter', () => {
+        card.style.transition = 'transform .08s linear';
+    });
+    card.addEventListener('mousemove', e => {
+        const r = card.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width  - 0.5;
+        const y = (e.clientY - r.top)  / r.height - 0.5;
+        card.style.transform = `perspective(700px) rotateY(${x * 7}deg) rotateX(${-y * 7}deg) translateZ(6px)`;
+    });
+    card.addEventListener('mouseleave', () => {
+        card.style.transition = 'transform .45s cubic-bezier(.16,1,.3,1)';
+        card.style.transform  = '';
+        setTimeout(() => { card.style.transition = ''; }, 450);
+    });
+});
+
+// Ripple effect on button / toggle clicks
+document.addEventListener('click', e => {
+    const btn = e.target.closest('.btn-accent, .btn-ghost, .btn-nav');
+    if (!btn) return;
+    const r    = btn.getBoundingClientRect();
+    const size = Math.max(r.width, r.height) * 2;
+    const el   = document.createElement('span');
+    el.className = 'ripple-el';
+    el.style.cssText = `width:${size}px;height:${size}px;top:${e.clientY-r.top-size/2}px;left:${e.clientX-r.left-size/2}px;`;
+    btn.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+});
+</script>
+</body>
+</html>

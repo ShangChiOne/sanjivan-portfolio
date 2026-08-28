@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "portfolio-static",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "5500"],
+      "port": 5500
+    },
+    {
+      "name": "portfolio-static-2",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "5510"],
+      "port": 5510
+    },
+    {
+      "name": "fyp-app",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["FYP Project - TP070073/app/app.py"],
+      "port": 5000
+    }
+  ]
+}
