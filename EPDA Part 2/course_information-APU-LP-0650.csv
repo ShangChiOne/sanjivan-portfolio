@@ -1,0 +1,101 @@
+CourseID,CourseName,Credits,Semester,Instructor,Capacity
+C101,Algorithms,4,Spring,Dr. Brown,143
+C102,Artificial Intelligence,2,Summer,Dr. Lee,92
+C103,Biology,2,Summer,Dr. Johnson,100
+C104,Chemistry,3,Fall,Dr. Lee,130
+C105,Operating Systems,2,Fall,Dr. Brown,144
+C106,Artificial Intelligence,4,Summer,Prof. Davis,191
+C107,English Composition,4,Fall,Prof. Chen,51
+C108,Literature,3,Spring,Dr. Kumar,197
+C109,Software Engineering,2,Spring,Prof. Davis,146
+C110,Literature,3,Summer,Prof. Davis,61
+C111,Database Systems,2,Summer,Prof. Chen,99
+C112,English Composition,2,Fall,Prof. Chen,148
+C113,Data Structures,4,Spring,Dr. Kumar,195
+C114,Software Engineering,4,Spring,Dr. Miller,121
+C115,Cybersecurity,3,Summer,Dr. Lee,95
+C116,Operating Systems,3,Spring,Prof. Chen,104
+C117,Cybersecurity,2,Summer,Dr. Brown,120
+C118,Software Engineering,2,Fall,Dr. Miller,76
+C119,Philosophy,4,Spring,Dr. Kumar,193
+C120,Machine Learning,3,Spring,Prof. Chen,176
+C121,Computer Science,3,Fall,Prof. Davis,132
+C122,Mathematics,4,Summer,Prof. Smith,170
+C123,Operating Systems,2,Spring,Dr. Miller,74
+C124,Mathematics,3,Summer,Prof. Davis,52
+C125,Mathematics,2,Summer,Prof. Chen,51
+C126,Cybersecurity,2,Fall,Prof. Chen,58
+C127,History,4,Spring,Dr. Johnson,69
+C128,Mathematics,2,Fall,Prof. Davis,67
+C129,Software Engineering,4,Summer,Dr. Brown,52
+C130,History,4,Summer,Dr. Kumar,58
+C131,Cybersecurity,4,Fall,Dr. Johnson,67
+C132,Physics,3,Fall,Prof. Smith,156
+C133,Physics,3,Summer,Dr. Lee,86
+C134,Data Structures,4,Fall,Dr. Johnson,142
+C135,Biology,2,Summer,Dr. Miller,96
+C136,Artificial Intelligence,4,Summer,Dr. Brown,119
+C137,Algorithms,3,Summer,Dr. Lee,163
+C138,Cybersecurity,3,Spring,Dr. Johnson,169
+C139,Economics,3,Spring,Dr. Miller,183
+C140,Philosophy,4,Spring,Dr. Miller,152
+C141,English Composition,4,Summer,Dr. Lee,176
+C142,Networking,3,Spring,Prof. Smith,102
+C143,Biology,4,Spring,Dr. Miller,72
+C144,Mathematics,3,Summer,Dr. Kumar,169
+C145,Cybersecurity,4,Spring,Dr. Brown,60
+C146,Cybersecurity,2,Summer,Prof. Smith,59
+C147,Philosophy,4,Fall,Prof. Chen,80
+C148,English Composition,2,Fall,Dr. Brown,114
+C149,English Composition,2,Fall,Dr. Miller,66
+C150,Literature,4,Fall,Dr. Kumar,60
+C151,Philosophy,2,Summer,Dr. Miller,53
+C152,Computer Science,2,Spring,Prof. Chen,69
+C153,Data Structures,3,Fall,Dr. Brown,56
+C154,Networking,4,Summer,Dr. Miller,98
+C155,Operating Systems,3,Fall,Dr. Lee,164
+C156,Economics,3,Fall,Prof. Davis,109
+C157,Operating Systems,2,Spring,Prof. Davis,69
+C158,Computer Science,3,Spring,Dr. Brown,125
+C159,Literature,3,Summer,Prof. Smith,188
+C160,English Composition,3,Fall,Dr. Johnson,88
+C161,History,2,Spring,Prof. Chen,184
+C162,Philosophy,3,Summer,Prof. Chen,60
+C163,Economics,2,Fall,Prof. Chen,183
+C164,English Composition,2,Spring,Prof. Davis,141
+C165,Artificial Intelligence,4,Summer,Prof. Davis,151
+C166,History,3,Summer,Dr. Kumar,55
+C167,Software Engineering,3,Spring,Dr. Miller,162
+C168,Networking,4,Spring,Dr. Johnson,193
+C169,Computer Science,4,Spring,Dr. Lee,50
+C170,Statistics,4,Spring,Prof. Davis,140
+C171,Cybersecurity,4,Spring,Dr. Miller,159
+C172,Chemistry,2,Summer,Dr. Johnson,189
+C173,Computer Science,2,Summer,Prof. Smith,177
+C174,Computer Science,3,Fall,Dr. Brown,92
+C175,Physics,2,Summer,Dr. Kumar,194
+C176,Economics,2,Fall,Dr. Lee,95
+C177,Statistics,2,Fall,Dr. Miller,94
+C178,English Composition,2,Summer,Prof. Davis,177
+C179,English Composition,3,Summer,Dr. Kumar,103
+C180,Software Engineering,4,Fall,Prof. Chen,133
+C181,Statistics,3,Summer,Dr. Miller,154
+C182,Statistics,4,Summer,Dr. Johnson,55
+C183,English Composition,4,Summer,Dr. Brown,61
+C184,Database Systems,3,Spring,Dr. Lee,53
+C185,Data Structures,4,Spring,Dr. Johnson,88
+C186,Machine Learning,4,Summer,Dr. Lee,176
+C187,Statistics,3,Fall,Dr. Brown,121
+C188,Literature,4,Spring,Dr. Kumar,154
+C189,Data Structures,3,Summer,Dr. Lee,154
+C190,Statistics,2,Summer,Dr. Lee,62
+C191,Software Engineering,3,Fall,Dr. Johnson,168
+C192,Cybersecurity,4,Spring,Dr. Brown,62
+C193,Artificial Intelligence,4,Summer,Prof. Smith,122
+C194,Data Structures,3,Summer,Dr. Miller,133
+C195,Philosophy,4,Summer,Dr. Lee,69
+C196,Computer Science,2,Spring,Dr. Johnson,115
+C197,Statistics,4,Summer,Prof. Chen,114
+C198,English Composition,3,Fall,Dr. Johnson,183
+C199,Networking,3,Fall,Prof. Davis,92
+C200,Physics,3,Summer,Dr. Miller,85

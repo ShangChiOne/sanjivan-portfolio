@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:p="http://primefaces.org/ui">
+<h:head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>CRS &#8211; Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <h:outputStylesheet library="css" name="style.css"/>
+</h:head>
+<h:body>
+
+    <div class="login-bg">
+        <div class="login-box">
+
+            <div class="login-header">
+                <div class="login-logo-wrap">
+                    <i class="pi pi-book"/>
+                </div>
+                <h1>Course Recovery System</h1>
+                <p>Asia Pacific University of Technology &amp; Innovation</p>
+            </div>
+
+            <div class="login-body">
+                <h:form id="loginForm">
+                    <p:messages showDetail="true" closable="true"/>
+
+                    <div class="login-field">
+                        <label class="login-field-label" for="username">Username</label>
+                        <p:inputText id="username" value="#{loginBean.username}"
+                                     required="true" requiredMessage="Username is required."
+                                     style="width:100%;" placeholder="Enter your username"/>
+                        <p:message for="username" style="font-size:0.8rem; color:#dc2626;"/>
+                    </div>
+
+                    <div class="login-field">
+                        <label class="login-field-label" for="password">Password</label>
+                        <p:password id="password" value="#{loginBean.password}"
+                                    required="true" requiredMessage="Password is required."
+                                    feedback="false" style="width:100%;"
+                                    placeholder="Enter your password"/>
+                        <p:message for="password" style="font-size:0.8rem; color:#dc2626;"/>
+                    </div>
+
+                    <p:commandButton value="Sign In" icon="pi pi-sign-in"
+                                     action="#{loginBean.login}"
+                                     style="width:100%; margin-top:0.25rem; padding:0.6rem 1rem;"
+                                     update="loginForm"/>
+                </h:form>
+            </div>
+
+            <div class="login-footer-bar">
+                Authorised personnel only &#160;&#183;&#160; CRS v2026
+            </div>
+        </div>
+    </div>
+
+</h:body>
+</html>

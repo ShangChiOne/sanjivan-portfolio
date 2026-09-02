@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:p="http://primefaces.org/ui">
+<ui:composition template="/WEB-INF/templates/main.xhtml">
+
+    <ui:define name="pageTitle">Course Recovery Plans</ui:define>
+
+    <ui:define name="content">
+
+        <div class="page-header">
+            <div>
+                <h2><i class="pi pi-list"/> Course Recovery Plans</h2>
+                <p>Create and monitor student course recovery plans, milestones, and failed component tracking.</p>
+            </div>
+            <p:commandButton value="New Recovery Plan" icon="pi pi-plus"
+                             onclick="PF('newPlanDlg').show()" type="button"
+                             styleClass="ui-button-success"/>
+        </div>
+
+        <!-- Recovery plans table -->
+        <h:form id="plansForm">
+            <p:messages id="plansMsgs" showDetail="true"/>
+            <p:dataTable id="plansTable" value="#{recoveryPlanBean.plans}" var="plan"
+                         paginator="true" rows="10" stripedRows="true" paginatorPosition="bottom"
+                         emptyMessage="No recovery plans found.">
+                <f:facet name="header">Recovery Plans</f:facet>
+
+                <p:column headerText="Student">
+                    <strong>#{plan.student.fullName}</strong>
+                    <div style="font-size:0.78rem; color:#64748b;">#{plan.student.studentNumber}</div>
+                </p:column>
+                <p:column headerText="Course" style="width:100px;">
+                    <strong>#{plan.enrollment.course.courseCode}</strong>
+                </p:column>
+                <p:column headerText="Recommendation">
+                    <span style="font-size:0.875rem; color:#475569;">
+                        #{plan.recommendation != null ? plan.recommendation : '&#8211;'}
+                    </span>
+                </p:column>
+                <p:column headerText="Status" style="width:110px;">
+                    <p:tag value="#{plan.status}"
+                           severity="#{plan.status == 'ACTIVE'     ? 'warning'
+                                      : plan.status == 'COMPLETED' ? 'success' : 'danger'}"/>
+                </p:column>
+                <p:column headerText="Created" style="width:140px;">
+                    <span style="font-size:0.85rem; color:#64748b;">
+                        #{plan.createdAt != null ? plan.createdAt.toLocalDate() : ''}
+                    </span>
+                </p:column>
+                <p:column headerText="Actions" style="width:185px;">
+                    <p:commandButton icon="pi pi-eye" title="View Details"
+                                     action="#{recoveryPlanBean.selectPlan(plan)}"
+                                     update=":planDetailDialog"
+                                     oncomplete="PF('planDetailDlg').show()"
+                                     styleClass="ui-button-info" style="margin-right:4px;"/>
+                    <p:commandButton icon="pi pi-check" title="Mark Completed"
+                                     action="#{recoveryPlanBean.updateStatus(plan.planId, 'COMPLETED')}"
+                                     update=":plansForm:plansTable :plansForm:plansMsgs"
+                                     styleClass="ui-button-success" style="margin-right:4px;"
+                                     rendered="#{plan.status == 'ACTIVE'}">
+                        <p:confirm header="Confirm" message="Mark this plan as completed?"/>
+                    </p:commandButton>
+                    <p:commandButton icon="pi pi-times-circle" title="Mark Failed"
+                                     action="#{recoveryPlanBean.updateStatus(plan.planId, 'FAILED')}"
+                                     update=":plansForm:plansTable :plansForm:plansMsgs"
+                                     styleClass="ui-button-warning" style="margin-right:4px;"
+                                     rendered="#{plan.status == 'ACTIVE'}">
+                        <p:confirm header="Confirm" message="Mark this plan as failed?"/>
+                    </p:commandButton>
+                    <p:commandButton icon="pi pi-trash" title="Delete"
+                                     action="#{recoveryPlanBean.deletePlan(plan.planId)}"
+                                     update=":plansForm:plansTable :plansForm:plansMsgs"
+                                     styleClass="ui-button-danger">
+                        <p:confirm header="Confirm" message="Permanently delete this recovery plan?"/>
+                    </p:commandButton>
+                </p:column>
+            </p:dataTable>
+
+            <p:confirmDialog global="true" widgetVar="confirmDialogWidget"
+                             modal="true" responsive="true" width="380">
+                <p:commandButton value="Yes" type="button"
+                                 styleClass="ui-button-danger ui-confirmdialog-yes"/>
+                <p:commandButton value="No"  type="button"
+                                 styleClass="ui-button-secondary ui-confirmdialog-no"/>
+            </p:confirmDialog>
+        </h:form>
+
+        <!-- New Plan dialog -->
+        <p:dialog header="Create Recovery Plan" widgetVar="newPlanDlg"
+                  modal="true" width="520" resizable="false">
+            <h:form id="newPlanForm">
+                <p:messages id="newPlanMsgs" showDetail="true"/>
+                <p:panelGrid columns="2" cellpadding="6">
+                    <p:outputLabel value="Student *"/>
+                    <h:selectOneMenu value="#{recoveryPlanBean.selectedStudentId}"
+                                     required="true" style="width:100%;">
+                        <f:selectItem itemLabel="-- Select Student --" itemValue="0"/>
+                        <f:selectItems value="#{recoveryPlanBean.students}"
+                                       var="s"
+                                       itemLabel="#{s.studentNumber} – #{s.fullName}"
+                                       itemValue="#{s.studentId}"/>
+                        <f:ajax event="change"
+                                listener="#{recoveryPlanBean.onStudentSelect}"
+                                render="enrollmentMenu"/>
+                    </h:selectOneMenu>
+
+                    <p:outputLabel value="Failed Course *"/>
+                    <h:selectOneMenu id="enrollmentMenu"
+                                     value="#{recoveryPlanBean.selectedEnrollmentId}"
+                                     required="true"
+                                     disabled="#{empty recoveryPlanBean.failedEnrollments}"
+                                     style="width:100%;">
+                        <f:selectItem itemLabel="-- Select Failed Course --" itemValue="0"/>
+                        <f:selectItems value="#{recoveryPlanBean.failedEnrollments}"
+                                       var="sc"
+                                       itemLabel="#{sc.course.courseCode} – #{sc.course.courseTitle} (Sem #{sc.semester}, Yr #{sc.yearOfStudy})"
+                                       itemValue="#{sc.enrollmentId}"/>
+                    </h:selectOneMenu>
+
+                    <p:outputLabel value="Recommendation"/>
+                    <p:inputTextarea value="#{recoveryPlanBean.recommendation}" rows="4"
+                                     style="width:100%;" placeholder="Recommended recovery approach..."/>
+                </p:panelGrid>
+                <div style="margin-top:0.75rem; display:flex; gap:0.5rem;">
+                    <p:commandButton value="Create Plan" icon="pi pi-save"
+                                     action="#{recoveryPlanBean.createPlan}"
+                                     update=":plansForm:plansTable newPlanForm newPlanMsgs"
+                                     oncomplete="if (!args.validationFailed) PF('newPlanDlg').hide()"
+                                     styleClass="ui-button-success"/>
+                    <p:commandButton value="Cancel" icon="pi pi-times"
+                                     onclick="PF('newPlanDlg').hide()" type="button"
+                                     styleClass="ui-button-secondary"/>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <!-- Plan Detail dialog -->
+        <p:dialog header="Recovery Plan Details" widgetVar="planDetailDlg"
+                  modal="true" id="planDetailDialog" width="760" resizable="false">
+            <h:form id="planDetailForm">
+                <p:messages id="planDetailMsgs" showDetail="true"/>
+                <p:tabView id="planTabs">
+
+                    <!-- Recommendation tab -->
+                    <p:tab title="Recommendation">
+                        <div style="margin-bottom:1rem;">
+                            <p style="font-weight:600; margin:0 0 0.4rem 0;">Current Recommendation</p>
+                            <h:panelGroup id="recDisplay" layout="block">
+                                <p style="color:#475569; font-size:0.9rem; margin:0 0 1rem 0;">
+                                    #{recoveryPlanBean.selectedPlan.recommendation != null
+                                      ? recoveryPlanBean.selectedPlan.recommendation
+                                      : 'No recommendation set.'}
+                                </p>
+                            </h:panelGroup>
+                        </div>
+                        <p:panel header="Update Recommendation">
+                            <p:inputTextarea value="#{recoveryPlanBean.editRecommendation}"
+                                             rows="5" style="width:100%;"
+                                             placeholder="Enter updated recommendation..."/>
+                            <div style="margin-top:0.75rem; display:flex; gap:0.5rem;">
+                                <p:commandButton value="Save" icon="pi pi-save"
+                                                 action="#{recoveryPlanBean.updateRecommendation}"
+                                                 update=":planDetailForm:planTabs:recDisplay :planDetailForm:planDetailMsgs"
+                                                 styleClass="ui-button-success"/>
+                                <p:commandButton value="Remove" icon="pi pi-trash"
+                                                 action="#{recoveryPlanBean.removeRecommendation}"
+                                                 update=":planDetailForm:planTabs:recDisplay :planDetailForm:planDetailMsgs"
+                                                 styleClass="ui-button-danger"/>
+                            </div>
+                        </p:panel>
+                    </p:tab>
+
+                    <!-- Milestones tab -->
+                    <p:tab title="Milestones">
+                        <p:dataTable value="#{recoveryPlanBean.milestones}" var="m"
+                                     emptyMessage="No milestones yet." id="milestonesTable">
+                            <f:facet name="header">Plan Milestones</f:facet>
+                            <p:column headerText="Study Week" style="width:120px;">
+                                <strong>#{m.studyWeek}</strong>
+                            </p:column>
+                            <p:column headerText="Task">#{m.taskDescription}</p:column>
+                            <p:column headerText="Due Date" style="width:110px;">
+                                <span style="font-size:0.85rem; color:#64748b;">#{m.dueDate}</span>
+                            </p:column>
+                            <p:column headerText="Status" style="width:90px;">
+                                <p:tag value="#{m.completed ? 'Done' : 'Pending'}"
+                                       severity="#{m.completed ? 'success' : 'warning'}"/>
+                            </p:column>
+                            <p:column headerText="Actions" style="width:130px;">
+                                <p:commandButton icon="pi pi-pencil" title="Edit"
+                                                 action="#{recoveryPlanBean.selectMilestoneForEdit(m)}"
+                                                 update=":planDetailForm:planTabs:milestoneEditWrap"
+                                                 styleClass="ui-button-warning" style="margin-right:4px;"/>
+                                <p:commandButton icon="pi pi-check" title="Mark Complete"
+                                                 action="#{recoveryPlanBean.completeMilestone(m.milestoneId)}"
+                                                 update=":planDetailForm:planTabs:milestonesTable"
+                                                 rendered="#{!m.completed}"
+                                                 styleClass="ui-button-success" style="margin-right:4px;"/>
+                                <p:commandButton icon="pi pi-trash" title="Delete"
+                                                 action="#{recoveryPlanBean.deleteMilestone(m.milestoneId)}"
+                                                 update=":planDetailForm:planTabs:milestonesTable"
+                                                 styleClass="ui-button-danger"/>
+                            </p:column>
+                        </p:dataTable>
+
+                        <!-- Edit existing milestone -->
+                        <h:panelGroup id="milestoneEditWrap" layout="block">
+                        <p:panel id="milestoneEditPanel"
+                                 rendered="#{recoveryPlanBean.selectedMilestoneId > 0}"
+                                 style="margin-top:1rem;">
+                            <f:facet name="header">Edit Milestone</f:facet>
+                            <p:panelGrid columns="2" cellpadding="6">
+                                <p:outputLabel value="Study Week *"/>
+                                <p:inputText value="#{recoveryPlanBean.editStudyWeek}"
+                                             required="true" style="width:100%;"/>
+                                <p:outputLabel value="Task *"/>
+                                <p:inputText value="#{recoveryPlanBean.editTaskDescription}"
+                                             required="true" style="width:100%;"/>
+                                <p:outputLabel value="Due Date"/>
+                                <p:datePicker value="#{recoveryPlanBean.editDueDate}"/>
+                            </p:panelGrid>
+                            <div style="margin-top:0.75rem; display:flex; gap:0.5rem;">
+                                <p:commandButton value="Save Changes" icon="pi pi-save"
+                                                 action="#{recoveryPlanBean.updateMilestone}"
+                                                 update=":planDetailForm:planTabs:milestonesTable :planDetailForm:planTabs:milestoneEditWrap :planDetailForm:planDetailMsgs"
+                                                 styleClass="ui-button-success"/>
+                                <p:commandButton value="Cancel" icon="pi pi-times"
+                                                 action="#{recoveryPlanBean.cancelMilestoneEdit}"
+                                                 update=":planDetailForm:planTabs:milestoneEditWrap"
+                                                 styleClass="ui-button-secondary"/>
+                            </div>
+                        </p:panel>
+                        </h:panelGroup>
+
+                        <p:separator/>
+                        <p:panel header="Add Milestone">
+                            <p:panelGrid columns="2" cellpadding="6">
+                                <p:outputLabel value="Study Week *"/>
+                                <p:inputText value="#{recoveryPlanBean.studyWeek}" required="true"
+                                             placeholder="e.g. Week 1-2" style="width:100%;"/>
+
+                                <p:outputLabel value="Task *"/>
+                                <p:inputText value="#{recoveryPlanBean.taskDescription}"
+                                             required="true" style="width:100%;"/>
+
+                                <p:outputLabel value="Due Date"/>
+                                <p:datePicker value="#{recoveryPlanBean.dueDate}"/>
+                            </p:panelGrid>
+                            <div style="margin-top:0.75rem;">
+                                <p:commandButton value="Add Milestone" icon="pi pi-plus"
+                                                 action="#{recoveryPlanBean.addMilestone}"
+                                                 update=":planDetailForm:planTabs:milestonesTable :planDetailForm:planDetailMsgs"
+                                                 styleClass="ui-button-success"/>
+                            </div>
+                        </p:panel>
+                    </p:tab>
+
+                    <!-- Failed Components tab -->
+                    <p:tab title="Failed Components">
+                        <p:dataTable value="#{recoveryPlanBean.failedComponents}" var="fc"
+                                     emptyMessage="No failed components added yet."
+                                     id="componentsTable">
+                            <f:facet name="header">Failed Assessment Components</f:facet>
+                            <p:column headerText="Component">
+                                <strong>#{fc.component.componentName}</strong>
+                            </p:column>
+                            <p:column headerText="Type" style="width:120px;">
+                                <p:tag value="#{fc.component.componentType}" severity="info"/>
+                            </p:column>
+                            <p:column headerText="Recovery Grade" style="width:140px; text-align:center;">
+                                #{fc.recoveryGrade != null ? fc.recoveryGrade : '&#8211;'}
+                            </p:column>
+                            <p:column headerText="Recovered" style="width:110px;">
+                                <p:tag value="#{fc.recovered ? 'Yes' : 'No'}"
+                                       severity="#{fc.recovered ? 'success' : 'danger'}"/>
+                            </p:column>
+                            <p:column headerText="Actions" style="width:120px; text-align:center;">
+                                <p:commandButton icon="pi pi-pencil" title="Set Recovery Grade"
+                                                 action="#{recoveryPlanBean.selectFailedComponent(fc.id)}"
+                                                 update=":planDetailForm:planTabs:gradePanelWrap"
+                                                 styleClass="ui-button-warning" style="margin-right:4px;"/>
+                                <p:commandButton icon="pi pi-trash" title="Remove"
+                                                 action="#{recoveryPlanBean.deleteFailedComponent(fc.id)}"
+                                                 update=":planDetailForm:planTabs:componentsTable :planDetailForm:planDetailMsgs"
+                                                 styleClass="ui-button-danger"/>
+                            </p:column>
+                        </p:dataTable>
+
+                        <h:panelGroup id="gradePanelWrap" layout="block">
+                        <p:panel id="gradePanel"
+                                 rendered="#{recoveryPlanBean.selectedFailedComponentId > 0}"
+                                 style="margin-top:1rem;">
+                            <f:facet name="header">Set Recovery Grade</f:facet>
+                            <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+                                <p:outputLabel value="Recovery Grade *"/>
+                                <h:selectOneMenu value="#{recoveryPlanBean.recoveryGrade}"
+                                                 required="true" style="width:120px;">
+                                    <f:selectItem itemLabel="-- Select --" itemValue=""/>
+                                    <f:selectItem itemLabel="A+"  itemValue="A+"/>
+                                    <f:selectItem itemLabel="A"   itemValue="A"/>
+                                    <f:selectItem itemLabel="A-"  itemValue="A-"/>
+                                    <f:selectItem itemLabel="B+"  itemValue="B+"/>
+                                    <f:selectItem itemLabel="B"   itemValue="B"/>
+                                    <f:selectItem itemLabel="B-"  itemValue="B-"/>
+                                    <f:selectItem itemLabel="C+"  itemValue="C+"/>
+                                    <f:selectItem itemLabel="C"   itemValue="C"/>
+                                    <f:selectItem itemLabel="C-"  itemValue="C-"/>
+                                    <f:selectItem itemLabel="D+"  itemValue="D+"/>
+                                    <f:selectItem itemLabel="D"   itemValue="D"/>
+                                    <f:selectItem itemLabel="F"   itemValue="F"/>
+                                </h:selectOneMenu>
+                                <p:commandButton value="Save Grade" icon="pi pi-save"
+                                                 action="#{recoveryPlanBean.recordRecoveryGrade}"
+                                                 update=":planDetailForm:planTabs:componentsTable :planDetailForm:planTabs:gradePanelWrap :planDetailForm:planDetailMsgs"
+                                                 styleClass="ui-button-success"/>
+                            </div>
+                        </p:panel>
+                        </h:panelGroup>
+
+                        <p:separator/>
+                        <p:panel header="Add Failed Component">
+                            <p:panelGrid columns="2" cellpadding="6">
+                                <p:outputLabel value="Component *"/>
+                                <h:selectOneMenu value="#{recoveryPlanBean.selectedComponentId}"
+                                                 required="true" style="width:100%;">
+                                    <f:selectItem itemLabel="-- Select Component --" itemValue="0"/>
+                                    <f:selectItems value="#{recoveryPlanBean.planComponents}"
+                                                   var="ac"
+                                                   itemLabel="#{ac.componentName} (#{ac.componentType})"
+                                                   itemValue="#{ac.componentId}"/>
+                                </h:selectOneMenu>
+                            </p:panelGrid>
+                            <div style="margin-top:0.75rem;">
+                                <p:commandButton value="Add Component" icon="pi pi-plus"
+                                                 action="#{recoveryPlanBean.addFailedComponent}"
+                                                 update=":planDetailForm:planTabs:componentsTable :planDetailForm:planDetailMsgs"
+                                                 styleClass="ui-button-success"/>
+                            </div>
+                        </p:panel>
+                    </p:tab>
+
+                </p:tabView>
+
+                <div style="margin-top:1rem; text-align:right;">
+                    <p:commandButton value="Close" icon="pi pi-times"
+                                     onclick="PF('planDetailDlg').hide()" type="button"
+                                     styleClass="ui-button-secondary"/>
+                </div>
+            </h:form>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>
+</html>

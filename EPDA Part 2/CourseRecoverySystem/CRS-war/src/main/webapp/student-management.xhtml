@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:p="http://primefaces.org/ui">
+<ui:composition template="/WEB-INF/templates/main.xhtml">
+
+    <ui:define name="pageTitle">Student Management</ui:define>
+
+    <ui:define name="content">
+
+        <div class="page-header">
+            <div>
+                <h2><i class="pi pi-graduation-cap"/> Student Management</h2>
+                <p>Add students, manage enrolments, and record academic grades.</p>
+            </div>
+        </div>
+
+        <!-- Add student -->
+        <p:panel header="Add New Student" toggleable="true" style="margin-bottom:1rem;">
+            <h:form id="addForm">
+                <p:messages id="addMsgs" showDetail="true"/>
+                <p:panelGrid columns="2" cellpadding="6">
+                    <p:outputLabel for="snum"  value="Student Number *"/>
+                    <p:inputText id="snum" value="#{studentManagementBean.newStudent.studentNumber}"
+                                 required="true" placeholder="e.g. TP001234"/>
+
+                    <p:outputLabel for="sname" value="Full Name *"/>
+                    <p:inputText id="sname" value="#{studentManagementBean.newStudent.fullName}" required="true"/>
+
+                    <p:outputLabel for="semail" value="Email *"/>
+                    <p:inputText id="semail" value="#{studentManagementBean.newStudent.email}" required="true"/>
+
+                    <p:outputLabel for="sprog" value="Programme *"/>
+                    <p:inputText id="sprog" value="#{studentManagementBean.newStudent.program}" required="true"/>
+
+                    <p:outputLabel for="syear" value="Year of Study *"/>
+                    <h:selectOneMenu id="syear" value="#{studentManagementBean.newStudent.yearOfStudy}"
+                                     required="true" style="width:100%;">
+                        <f:selectItem itemLabel="-- Select Year --" itemValue=""/>
+                        <f:selectItem itemLabel="Year 1" itemValue="1"/>
+                        <f:selectItem itemLabel="Year 2" itemValue="2"/>
+                        <f:selectItem itemLabel="Year 3" itemValue="3"/>
+                        <f:selectItem itemLabel="Year 4" itemValue="4"/>
+                    </h:selectOneMenu>
+                </p:panelGrid>
+                <div style="margin-top:0.75rem;">
+                    <p:commandButton value="Add Student" icon="pi pi-user-plus"
+                                     action="#{studentManagementBean.createStudent}"
+                                     update="addForm studentsTable addMsgs"
+                                     styleClass="ui-button-success"/>
+                </div>
+            </h:form>
+        </p:panel>
+
+        <!-- Students table -->
+        <h:form id="studentsTableForm">
+            <p:dataTable id="studentsTable" value="#{studentManagementBean.students}" var="s"
+                         paginator="true" rows="10" stripedRows="true" paginatorPosition="bottom"
+                         emptyMessage="No students found.">
+                <f:facet name="header">Student Records</f:facet>
+
+                <p:column headerText="Student No."><strong>#{s.studentNumber}</strong></p:column>
+                <p:column headerText="Full Name">#{s.fullName}</p:column>
+                <p:column headerText="Email">#{s.email}</p:column>
+                <p:column headerText="Programme">#{s.program}</p:column>
+                <p:column headerText="Year" style="text-align:center; width:60px;">#{s.yearOfStudy}</p:column>
+                <p:column headerText="Status">
+                    <p:tag value="#{s.active ? 'Active' : 'Inactive'}"
+                           severity="#{s.active ? 'success' : 'danger'}"/>
+                </p:column>
+                <p:column headerText="Actions" style="width:110px;">
+                    <p:commandButton icon="pi pi-folder-open" title="View / Enrol"
+                                     action="#{studentManagementBean.selectStudent(s)}"
+                                     update="enrollDialog"
+                                     oncomplete="PF('enrollDlg').show()"
+                                     styleClass="ui-button-info" style="margin-right:4px;"/>
+                    <p:commandButton icon="pi pi-ban" title="Deactivate"
+                                     action="#{studentManagementBean.deactivateStudent(s.studentId)}"
+                                     update="studentsTable" styleClass="ui-button-danger"
+                                     rendered="#{s.active}">
+                        <p:confirm header="Confirm" message="Deactivate #{s.fullName}?"/>
+                    </p:commandButton>
+                </p:column>
+            </p:dataTable>
+
+            <p:confirmDialog global="true" widgetVar="confirmDlgStudents"
+                             modal="true" responsive="true" width="380">
+                <p:commandButton value="Yes" type="button"
+                                 styleClass="ui-button-danger ui-confirmdialog-yes"/>
+                <p:commandButton value="No"  type="button"
+                                 styleClass="ui-button-secondary ui-confirmdialog-no"/>
+            </p:confirmDialog>
+        </h:form>
+
+        <!-- Enrolment dialog -->
+        <p:dialog widgetVar="enrollDlg" modal="true" id="enrollDialog" width="870"
+                  resizable="false"
+                  header="#{studentManagementBean.selectedStudent != null ?
+                            studentManagementBean.selectedStudent.fullName.concat(' – Enrolments') :
+                            'Enrolments'}">
+            <h:form id="enrollForm">
+                <p:messages showDetail="true"/>
+
+                <p:dataTable value="#{studentManagementBean.selectedEnrollments}" var="sc"
+                             emptyMessage="No enrolments yet."
+                             rendered="#{studentManagementBean.selectedEnrollments != null}">
+                    <f:facet name="header">Enrolment Records</f:facet>
+                    <p:column headerText="Course">
+                        <strong>#{sc.course.courseCode}</strong> &#8211; #{sc.course.courseTitle}
+                    </p:column>
+                    <p:column headerText="Sem"     style="width:55px;  text-align:center;">#{sc.semester}</p:column>
+                    <p:column headerText="Year"    style="width:55px;  text-align:center;">#{sc.yearOfStudy}</p:column>
+                    <p:column headerText="Attempt" style="width:70px;  text-align:center;">#{sc.attemptNumber}</p:column>
+                    <p:column headerText="Grade"   style="width:65px;  text-align:center;">
+                        #{sc.grade != null ? sc.grade : '&#8211;'}
+                    </p:column>
+                    <p:column headerText="GP"      style="width:65px;  text-align:center;">
+                        #{sc.gradePoint != null ? sc.gradePoint : '&#8211;'}
+                    </p:column>
+                    <p:column headerText="Result"  style="width:90px;">
+                        <p:tag value="#{sc.passed ? 'Passed' : 'Failed'}"
+                               severity="#{sc.passed ? 'success' : 'danger'}"/>
+                    </p:column>
+                    <p:column headerText="Actions" style="width:80px; text-align:center;">
+                        <p:commandButton icon="pi pi-pencil" title="Record Grade"
+                                         action="#{studentManagementBean.selectEnrollment(sc.enrollmentId)}"
+                                         update="gradeDialog"
+                                         oncomplete="PF('gradeDlg').show()"
+                                         styleClass="ui-button-warning"/>
+                    </p:column>
+                </p:dataTable>
+
+                <p:separator/>
+
+                <p:panel header="Enrol in a Course">
+                    <p:panelGrid columns="2" cellpadding="6">
+                        <p:outputLabel value="Course *"/>
+                        <h:selectOneMenu value="#{studentManagementBean.enrollCourseId}"
+                                         required="true" style="width:100%;">
+                            <f:selectItem itemLabel="-- Select Course --" itemValue="0"/>
+                            <f:selectItems value="#{studentManagementBean.courses}"
+                                           var="c"
+                                           itemLabel="#{c.courseCode} – #{c.courseTitle}"
+                                           itemValue="#{c.courseId}"/>
+                        </h:selectOneMenu>
+
+                        <p:outputLabel value="Semester *"/>
+                        <h:selectOneMenu value="#{studentManagementBean.enrollSemester}"
+                                         required="true" style="width:120px;">
+                            <f:selectItem itemLabel="1" itemValue="1"/>
+                            <f:selectItem itemLabel="2" itemValue="2"/>
+                            <f:selectItem itemLabel="3" itemValue="3"/>
+                        </h:selectOneMenu>
+
+                        <p:outputLabel value="Year of Study *"/>
+                        <h:selectOneMenu value="#{studentManagementBean.enrollYear}"
+                                         required="true" style="width:120px;">
+                            <f:selectItem itemLabel="-- Select --" itemValue=""/>
+                            <f:selectItem itemLabel="Year 1" itemValue="1"/>
+                            <f:selectItem itemLabel="Year 2" itemValue="2"/>
+                            <f:selectItem itemLabel="Year 3" itemValue="3"/>
+                            <f:selectItem itemLabel="Year 4" itemValue="4"/>
+                        </h:selectOneMenu>
+
+                        <p:outputLabel value="Attempt *"/>
+                        <h:selectOneMenu value="#{studentManagementBean.enrollAttempt}"
+                                         required="true" style="width:100%;">
+                            <f:selectItem itemLabel="1 – Normal Attempt"      itemValue="1"/>
+                            <f:selectItem itemLabel="2 – Component Resit"     itemValue="2"/>
+                            <f:selectItem itemLabel="3 – Full Course Resit"   itemValue="3"/>
+                        </h:selectOneMenu>
+                    </p:panelGrid>
+                    <div style="margin-top:0.75rem;">
+                        <p:commandButton value="Enrol Student" icon="pi pi-plus"
+                                         action="#{studentManagementBean.enrolStudent}"
+                                         update="enrollForm"
+                                         styleClass="ui-button-success"/>
+                    </div>
+                </p:panel>
+
+                <div style="margin-top:1rem; text-align:right;">
+                    <p:commandButton value="Close" icon="pi pi-times"
+                                     onclick="PF('enrollDlg').hide()" type="button"
+                                     styleClass="ui-button-secondary"/>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <!-- Record Grade dialog -->
+        <p:dialog header="Record Grade" widgetVar="gradeDlg" modal="true"
+                  id="gradeDialog" width="350" resizable="false">
+            <h:form id="gradeForm">
+                <p:messages showDetail="true"/>
+                <p:panelGrid columns="2" cellpadding="8">
+                    <p:outputLabel value="Grade *"/>
+                    <h:selectOneMenu value="#{studentManagementBean.newGrade}"
+                                     required="true" style="width:100%;">
+                        <f:selectItem itemLabel="-- Select --" itemValue=""/>
+                        <f:selectItem itemLabel="A+"  itemValue="A+"/>
+                        <f:selectItem itemLabel="A"   itemValue="A"/>
+                        <f:selectItem itemLabel="A-"  itemValue="A-"/>
+                        <f:selectItem itemLabel="B+"  itemValue="B+"/>
+                        <f:selectItem itemLabel="B"   itemValue="B"/>
+                        <f:selectItem itemLabel="B-"  itemValue="B-"/>
+                        <f:selectItem itemLabel="C+"  itemValue="C+"/>
+                        <f:selectItem itemLabel="C"   itemValue="C"/>
+                        <f:selectItem itemLabel="C-"  itemValue="C-"/>
+                        <f:selectItem itemLabel="D+"  itemValue="D+"/>
+                        <f:selectItem itemLabel="D"   itemValue="D"/>
+                        <f:selectItem itemLabel="F"   itemValue="F"/>
+                    </h:selectOneMenu>
+                </p:panelGrid>
+                <div style="margin-top:0.75rem; display:flex; gap:0.5rem;">
+                    <p:commandButton value="Save Grade" icon="pi pi-save"
+                                     action="#{studentManagementBean.recordGrade}"
+                                     update="gradeForm enrollForm"
+                                     oncomplete="if (!args.validationFailed) PF('gradeDlg').hide()"
+                                     styleClass="ui-button-success"/>
+                    <p:commandButton value="Cancel" icon="pi pi-times"
+                                     onclick="PF('gradeDlg').hide()" type="button"
+                                     styleClass="ui-button-secondary"/>
+                </div>
+            </h:form>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>
+</html>

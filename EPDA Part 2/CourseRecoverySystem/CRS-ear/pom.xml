@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.crs</groupId>
+        <artifactId>CourseRecoverySystem</artifactId>
+        <version>1.0</version>
+    </parent>
+
+    <artifactId>CRS-ear</artifactId>
+    <packaging>ear</packaging>
+    <name>CRS Enterprise Application</name>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.crs</groupId>
+            <artifactId>CRS-ejb</artifactId>
+            <version>${project.version}</version>
+            <type>ejb</type>
+        </dependency>
+        <dependency>
+            <groupId>com.crs</groupId>
+            <artifactId>CRS-war</artifactId>
+            <version>${project.version}</version>
+            <type>war</type>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-ear-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <version>8</version>
+                    <defaultLibBundleDir>lib</defaultLibBundleDir>
+                    <modules>
+                        <ejbModule>
+                            <groupId>com.crs</groupId>
+                            <artifactId>CRS-ejb</artifactId>
+                        </ejbModule>
+                        <webModule>
+                            <groupId>com.crs</groupId>
+                            <artifactId>CRS-war</artifactId>
+                            <contextRoot>/CRS</contextRoot>
+                        </webModule>
+                    </modules>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

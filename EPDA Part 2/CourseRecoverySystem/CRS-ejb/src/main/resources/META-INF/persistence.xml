@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="3.1"
+    xmlns="https://jakarta.ee/xml/ns/persistence"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence
+                        https://jakarta.ee/xml/ns/persistence/persistence_3_1.xsd">
+
+    <persistence-unit name="CRSPU" transaction-type="JTA">
+
+        <!--
+            JNDI name of the JDBC datasource configured in GlassFish.
+            Steps to create it:
+              1. Copy mysql-connector-j-x.x.x.jar to
+                 <glassfish>/domains/domain1/lib/
+              2. Admin Console → Resources → JDBC → Connection Pools → New
+                    Pool Name : CRSPool
+                    Resource Type : javax.sql.DataSource
+                    DB Vendor : MySQL
+                    Properties:
+                        url      = jdbc:mysql://localhost:3306/crs_db
+                        user     = root
+                        password = <your password>
+              3. Admin Console → Resources → JDBC → JDBC Resources → New
+                    JNDI Name : jdbc/CRSDS
+                    Pool Name : CRSPool
+        -->
+        <jta-data-source>jdbc/CRSDS</jta-data-source>
+
+        <!-- Entity classes -->
+        <class>com.crs.entity.User</class>
+        <class>com.crs.entity.Student</class>
+        <class>com.crs.entity.Course</class>
+        <class>com.crs.entity.AssessmentComponent</class>
+        <class>com.crs.entity.StudentCourse</class>
+        <class>com.crs.entity.StudentComponentGrade</class>
+        <class>com.crs.entity.RecoveryPlan</class>
+        <class>com.crs.entity.RecoveryMilestone</class>
+        <class>com.crs.entity.RecoveryFailedComponent</class>
+        <class>com.crs.entity.EmailNotification</class>
+
+        <exclude-unlisted-classes>false</exclude-unlisted-classes>
+
+        <properties>
+            <!-- EclipseLink (default JPA provider in GlassFish 7) -->
+            <property name="eclipselink.logging.level" value="WARNING"/>
+            <property name="eclipselink.ddl-generation"      value="none"/>
+            <property name="eclipselink.ddl-generation.output-mode" value="database"/>
+        </properties>
+    </persistence-unit>
+</persistence>

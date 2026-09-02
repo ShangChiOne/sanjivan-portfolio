@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:p="http://primefaces.org/ui">
+<ui:composition template="/WEB-INF/templates/main.xhtml">
+
+    <ui:define name="pageTitle">Dashboard</ui:define>
+
+    <!-- Full-width welcome banner, outside padded wrapper -->
+    <ui:define name="topBanner">
+        <div style="background:linear-gradient(130deg,#0f2744 0%,#1e3a5c 60%,#1d4ed8 100%);
+                    padding:2rem 2.5rem;
+                    display:flex; align-items:center; justify-content:space-between;
+                    flex-wrap:wrap; gap:1rem;">
+            <div>
+                <div style="font-size:1.6rem; font-weight:700; color:#fff; margin-bottom:0.3rem; letter-spacing:-0.02em;">
+                    Welcome back, #{session.getAttribute('currentUser').fullName}!
+                </div>
+                <div style="color:#94a3b8; font-size:0.9rem;">
+                    Select a module below to get started.
+                </div>
+            </div>
+            <div style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+                        color:#e2e8f0; border-radius:8px; padding:0.5rem 1.1rem;
+                        font-size:0.85rem; font-weight:500; display:flex; align-items:center; gap:0.5rem;">
+                <i class="pi pi-shield"/>
+                #{session.getAttribute('userRole') == 'COURSE_ADMIN' ? 'Course Administrator' : 'Academic Officer'}
+            </div>
+        </div>
+    </ui:define>
+
+    <ui:define name="content">
+
+        <!-- Stats Row -->
+        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:1.25rem; margin-bottom:2rem;">
+
+            <!-- Total Users -->
+            <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);
+                        border-radius:10px; padding:1.5rem;
+                        box-shadow:0 4px 12px rgba(79,70,229,0.3); color:#fff;
+                        position:relative; overflow:hidden;">
+                <div style="position:absolute; right:-12px; top:-12px; width:80px; height:80px;
+                            background:rgba(255,255,255,0.08); border-radius:50%;"/>
+                <div style="width:38px; height:38px; background:rgba(255,255,255,0.2); border-radius:8px;
+                            display:flex; align-items:center; justify-content:center; margin-bottom:0.9rem;">
+                    <i class="pi pi-users" style="font-size:1rem;"/>
+                </div>
+                <div style="font-size:2rem; font-weight:700; line-height:1; margin-bottom:0.3rem;">
+                    #{userManagementBean.users != null ? userManagementBean.users.size() : 0}
+                </div>
+                <div style="font-size:0.83rem; opacity:0.85;">Total Users</div>
+            </div>
+
+            <!-- Total Students -->
+            <div style="background:linear-gradient(135deg,#0891b2,#0284c7);
+                        border-radius:10px; padding:1.5rem;
+                        box-shadow:0 4px 12px rgba(8,145,178,0.3); color:#fff;
+                        position:relative; overflow:hidden;">
+                <div style="position:absolute; right:-12px; top:-12px; width:80px; height:80px;
+                            background:rgba(255,255,255,0.08); border-radius:50%;"/>
+                <div style="width:38px; height:38px; background:rgba(255,255,255,0.2); border-radius:8px;
+                            display:flex; align-items:center; justify-content:center; margin-bottom:0.9rem;">
+                    <i class="pi pi-graduation-cap" style="font-size:1rem;"/>
+                </div>
+                <div style="font-size:2rem; font-weight:700; line-height:1; margin-bottom:0.3rem;">
+                    #{studentManagementBean.students != null ? studentManagementBean.students.size() : 0}
+                </div>
+                <div style="font-size:0.83rem; opacity:0.85;">Total Students</div>
+            </div>
+
+            <!-- Recovery Plans -->
+            <div style="background:linear-gradient(135deg,#d97706,#f59e0b);
+                        border-radius:10px; padding:1.5rem;
+                        box-shadow:0 4px 12px rgba(217,119,6,0.3); color:#fff;
+                        position:relative; overflow:hidden;">
+                <div style="position:absolute; right:-12px; top:-12px; width:80px; height:80px;
+                            background:rgba(255,255,255,0.08); border-radius:50%;"/>
+                <div style="width:38px; height:38px; background:rgba(255,255,255,0.2); border-radius:8px;
+                            display:flex; align-items:center; justify-content:center; margin-bottom:0.9rem;">
+                    <i class="pi pi-list" style="font-size:1rem;"/>
+                </div>
+                <div style="font-size:2rem; font-weight:700; line-height:1; margin-bottom:0.3rem;">
+                    #{recoveryPlanBean.plans != null ? recoveryPlanBean.plans.size() : 0}
+                </div>
+                <div style="font-size:0.83rem; opacity:0.85;">Recovery Plans</div>
+            </div>
+
+            <!-- Ineligible Students -->
+            <div style="background:linear-gradient(135deg,#dc2626,#ef4444);
+                        border-radius:10px; padding:1.5rem;
+                        box-shadow:0 4px 12px rgba(220,38,38,0.3); color:#fff;
+                        position:relative; overflow:hidden;">
+                <div style="position:absolute; right:-12px; top:-12px; width:80px; height:80px;
+                            background:rgba(255,255,255,0.08); border-radius:50%;"/>
+                <div style="width:38px; height:38px; background:rgba(255,255,255,0.2); border-radius:8px;
+                            display:flex; align-items:center; justify-content:center; margin-bottom:0.9rem;">
+                    <i class="pi pi-exclamation-triangle" style="font-size:1rem;"/>
+                </div>
+                <div style="font-size:2rem; font-weight:700; line-height:1; margin-bottom:0.3rem;">
+                    #{eligibilityBean.ineligibleStudents != null ? eligibilityBean.ineligibleStudents.size() : 0}
+                </div>
+                <div style="font-size:0.83rem; opacity:0.85;">Ineligible Students</div>
+            </div>
+
+        </div>
+
+        <!-- Module Cards — all identical flex-column structure so height is always equal -->
+        <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:1.25rem; align-items:stretch;">
+
+            <!-- User Management -->
+            <div onclick="window.location='#{request.contextPath}/user-management.xhtml'"
+                 onmouseover="this.style.boxShadow='0 8px 24px rgba(0,0,0,0.12)'; this.style.transform='translateY(-3px)';"
+                 onmouseout="this.style.boxShadow='0 1px 4px rgba(0,0,0,0.07)'; this.style.transform='translateY(0)';"
+                 style="background:#fff; border:1px solid #e2e8f0; border-top:3px solid #7c3aed;
+                        border-radius:10px; padding:1.4rem; cursor:pointer;
+                        transition:box-shadow 0.2s,transform 0.2s;
+                        box-shadow:0 1px 4px rgba(0,0,0,0.07);
+                        display:flex; flex-direction:column;">
+                <div style="display:flex; align-items:flex-start; min-height:44px; margin-bottom:1rem;">
+                    <div style="width:40px; height:40px; border-radius:9px; background:#f5f3ff;
+                                display:flex; align-items:center; justify-content:center; color:#7c3aed; font-size:1.1rem;">
+                        <i class="pi pi-users"/>
+                    </div>
+                </div>
+                <div style="font-size:0.95rem; font-weight:600; color:#0f172a; margin-bottom:0.4rem;">User Management</div>
+                <div style="font-size:0.82rem; color:#64748b; line-height:1.5; flex:1; margin-bottom:1rem;">
+                    Create and manage system user accounts, roles, and access credentials.
+                </div>
+                <div style="font-size:0.8rem; font-weight:600; color:#7c3aed; display:flex; align-items:center; gap:0.3rem;">
+                    <i class="pi pi-arrow-right"/> Open Module
+                </div>
+            </div>
+
+            <!-- Student Management -->
+            <div onclick="window.location='#{request.contextPath}/student-management.xhtml'"
+                 onmouseover="this.style.boxShadow='0 8px 24px rgba(0,0,0,0.12)'; this.style.transform='translateY(-3px)';"
+                 onmouseout="this.style.boxShadow='0 1px 4px rgba(0,0,0,0.07)'; this.style.transform='translateY(0)';"
+                 style="background:#fff; border:1px solid #e2e8f0; border-top:3px solid #0ea5e9;
+                        border-radius:10px; padding:1.4rem; cursor:pointer;
+                        transition:box-shadow 0.2s,transform 0.2s;
+                        box-shadow:0 1px 4px rgba(0,0,0,0.07);
+                        display:flex; flex-direction:column;">
+                <div style="display:flex; align-items:flex-start; min-height:44px; margin-bottom:1rem;">
+                    <div style="width:40px; height:40px; border-radius:9px; background:#f0f9ff;
+                                display:flex; align-items:center; justify-content:center; color:#0284c7; font-size:1.1rem;">
+                        <i class="pi pi-graduation-cap"/>
+                    </div>
+                </div>
+                <div style="font-size:0.95rem; font-weight:600; color:#0f172a; margin-bottom:0.4rem;">Student Management</div>
+                <div style="font-size:0.82rem; color:#64748b; line-height:1.5; flex:1; margin-bottom:1rem;">
+                    Add students, manage enrolments, and record course grades by semester.
+                </div>
+                <div style="font-size:0.8rem; font-weight:600; color:#0284c7; display:flex; align-items:center; gap:0.3rem;">
+                    <i class="pi pi-arrow-right"/> Open Module
+                </div>
+            </div>
+
+            <!-- Course Recovery Plans (Academic Officer only) -->
+            <h:panelGroup layout="block" style="display:contents;"
+                          rendered="#{session.getAttribute('userRole') == 'ACADEMIC_OFFICER'}">
+            <div onclick="window.location='#{request.contextPath}/recovery-plan.xhtml'"
+                 onmouseover="this.style.boxShadow='0 8px 24px rgba(0,0,0,0.12)'; this.style.transform='translateY(-3px)';"
+                 onmouseout="this.style.boxShadow='0 1px 4px rgba(0,0,0,0.07)'; this.style.transform='translateY(0)';"
+                 style="background:#fff; border:1px solid #e2e8f0; border-top:3px solid #f59e0b;
+                        border-radius:10px; padding:1.4rem; cursor:pointer;
+                        transition:box-shadow 0.2s,transform 0.2s;
+                        box-shadow:0 1px 4px rgba(0,0,0,0.07);
+                        display:flex; flex-direction:column;">
+                <div style="display:flex; align-items:flex-start; min-height:44px; margin-bottom:1rem;">
+                    <div style="width:40px; height:40px; border-radius:9px; background:#fffbeb;
+                                display:flex; align-items:center; justify-content:center; color:#b45309; font-size:1.1rem;">
+                        <i class="pi pi-list"/>
+                    </div>
+                </div>
+                <div style="font-size:0.95rem; font-weight:600; color:#0f172a; margin-bottom:0.4rem;">Course Recovery Plans</div>
+                <div style="font-size:0.82rem; color:#64748b; line-height:1.5; flex:1; margin-bottom:1rem;">
+                    Create and monitor student recovery plans and track milestone progress.
+                </div>
+                <div style="font-size:0.8rem; font-weight:600; color:#b45309; display:flex; align-items:center; gap:0.3rem;">
+                    <i class="pi pi-arrow-right"/> Open Module
+                </div>
+            </div>
+            </h:panelGroup>
+
+            <!-- Eligibility Check -->
+            <div onclick="window.location='#{request.contextPath}/eligibility.xhtml'"
+                 onmouseover="this.style.boxShadow='0 8px 24px rgba(0,0,0,0.12)'; this.style.transform='translateY(-3px)';"
+                 onmouseout="this.style.boxShadow='0 1px 4px rgba(0,0,0,0.07)'; this.style.transform='translateY(0)';"
+                 style="background:#fff; border:1px solid #e2e8f0; border-top:3px solid #10b981;
+                        border-radius:10px; padding:1.4rem; cursor:pointer;
+                        transition:box-shadow 0.2s,transform 0.2s;
+                        box-shadow:0 1px 4px rgba(0,0,0,0.07);
+                        display:flex; flex-direction:column;">
+                <div style="display:flex; align-items:flex-start; min-height:44px; margin-bottom:1rem;">
+                    <div style="width:40px; height:40px; border-radius:9px; background:#ecfdf5;
+                                display:flex; align-items:center; justify-content:center; color:#059669; font-size:1.1rem;">
+                        <i class="pi pi-check-circle"/>
+                    </div>
+                </div>
+                <div style="font-size:0.95rem; font-weight:600; color:#0f172a; margin-bottom:0.4rem;">Eligibility Check</div>
+                <div style="font-size:0.82rem; color:#64748b; line-height:1.5; flex:1; margin-bottom:1rem;">
+                    Review student CGPA and determine progression eligibility to the next year.
+                </div>
+                <div style="font-size:0.8rem; font-weight:600; color:#059669; display:flex; align-items:center; gap:0.3rem;">
+                    <i class="pi pi-arrow-right"/> Open Module
+                </div>
+            </div>
+
+            <!-- Performance Reports -->
+            <div onclick="window.location='#{request.contextPath}/reporting.xhtml'"
+                 onmouseover="this.style.boxShadow='0 8px 24px rgba(0,0,0,0.12)'; this.style.transform='translateY(-3px)';"
+                 onmouseout="this.style.boxShadow='0 1px 4px rgba(0,0,0,0.07)'; this.style.transform='translateY(0)';"
+                 style="background:#fff; border:1px solid #e2e8f0; border-top:3px solid #ef4444;
+                        border-radius:10px; padding:1.4rem; cursor:pointer;
+                        transition:box-shadow 0.2s,transform 0.2s;
+                        box-shadow:0 1px 4px rgba(0,0,0,0.07);
+                        display:flex; flex-direction:column;">
+                <div style="display:flex; align-items:flex-start; min-height:44px; margin-bottom:1rem;">
+                    <div style="width:40px; height:40px; border-radius:9px; background:#fef2f2;
+                                display:flex; align-items:center; justify-content:center; color:#dc2626; font-size:1.1rem;">
+                        <i class="pi pi-chart-bar"/>
+                    </div>
+                </div>
+                <div style="font-size:0.95rem; font-weight:600; color:#0f172a; margin-bottom:0.4rem;">Performance Reports</div>
+                <div style="font-size:0.82rem; color:#64748b; line-height:1.5; flex:1; margin-bottom:1rem;">
+                    Generate semester and full academic reports and email them to students.
+                </div>
+                <div style="font-size:0.8rem; font-weight:600; color:#dc2626; display:flex; align-items:center; gap:0.3rem;">
+                    <i class="pi pi-arrow-right"/> Open Module
+                </div>
+            </div>
+
+        </div>
+
+    </ui:define>
+
+</ui:composition>
+</html>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:p="http://primefaces.org/ui">
+<h:head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>CRS &#8211; <ui:insert name="pageTitle">Course Recovery System</ui:insert></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <h:outputStylesheet library="css" name="style.css"/>
+</h:head>
+<h:body>
+
+    <!-- Top navigation bar -->
+    <div style="background:#1e293b; min-height:56px; padding:0 1.5rem;
+                display:flex; align-items:center; justify-content:space-between;
+                box-shadow:0 2px 8px rgba(0,0,0,0.18);">
+        <a href="#{request.contextPath}/dashboard.xhtml"
+           style="display:flex; align-items:center; gap:0.5rem;
+                  color:#e2e8f0; text-decoration:none; font-weight:700;
+                  font-size:1rem; font-family:'Inter',sans-serif;">
+            <i class="pi pi-book"/>
+            CRS
+        </a>
+        <div style="display:flex; align-items:center; gap:0.75rem;">
+            <span style="color:#94a3b8; font-size:0.82rem; font-family:'Inter',sans-serif;
+                         display:flex; align-items:center; gap:0.4rem;">
+                <i class="pi pi-user"/>
+                #{session.getAttribute('currentUser').fullName}
+            </span>
+            <h:form style="margin:0; padding:0; display:inline-flex; align-items:center;">
+                <p:commandButton value="Logout" icon="pi pi-sign-out"
+                                 action="#{loginBean.logout}"
+                                 styleClass="navbar-logout-btn"/>
+            </h:form>
+        </div>
+    </div>
+
+    <!-- Optional full-width banner (used by dashboard, ignored by other pages) -->
+    <ui:insert name="topBanner"/>
+
+    <!-- Page content -->
+    <div class="page-wrapper" style="max-width:1280px; margin:0 auto; padding:2rem 2.5rem 4rem; box-sizing:border-box;">
+        <p:messages showDetail="true" closable="true"/>
+        <ui:insert name="content"/>
+    </div>
+
+    <!-- Footer -->
+    <div class="crs-footer" style="text-align:center; padding:1.1rem 1.5rem; font-size:0.8rem;
+                                    border-top:1px solid #e2e8f0; background:#fff; color:#64748b;">
+        Course Recovery System &#169; 2026 &#160;&#183;&#160; Asia Pacific University of Technology &amp; Innovation
+    </div>
+
+</h:body>
+</html>

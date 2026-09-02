@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.crs</groupId>
+        <artifactId>CourseRecoverySystem</artifactId>
+        <version>1.0</version>
+    </parent>
+
+    <artifactId>CRS-war</artifactId>
+    <packaging>war</packaging>
+    <name>CRS Web Module</name>
+
+    <dependencies>
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+        </dependency>
+        <!-- EJB module on classpath so the WAR can reference EJB types -->
+        <dependency>
+            <groupId>com.crs</groupId>
+            <artifactId>CRS-ejb</artifactId>
+            <version>${project.version}</version>
+            <type>ejb</type>
+            <scope>provided</scope>
+        </dependency>
+        <!-- PrimeFaces (bundled inside WAR) -->
+        <dependency>
+            <groupId>org.primefaces</groupId>
+            <artifactId>primefaces</artifactId>
+            <classifier>jakarta</classifier>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.4.0</version>
+                <configuration>
+                    <failOnMissingWebXml>true</failOnMissingWebXml>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

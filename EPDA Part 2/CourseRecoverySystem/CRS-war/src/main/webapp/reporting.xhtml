@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:p="http://primefaces.org/ui">
+<ui:composition template="/WEB-INF/templates/main.xhtml">
+
+    <ui:define name="pageTitle">Academic Performance Reports</ui:define>
+
+    <ui:define name="content">
+
+        <div class="page-header">
+            <div>
+                <h2><i class="pi pi-chart-bar"/> Academic Performance Reports</h2>
+                <p>Generate semester or full academic reports and email them to students.</p>
+            </div>
+        </div>
+
+        <h:form id="reportForm">
+            <p:messages id="reportMsgs" showDetail="true"/>
+
+            <!-- Filters -->
+            <p:panel header="Generate Report" style="margin-bottom:1rem;">
+                <div style="display:flex; gap:1.5rem; flex-wrap:wrap; align-items:flex-end; margin-bottom:1rem;">
+                    <div>
+                        <p:outputLabel for="stud" value="Student *"
+                                       style="display:block; font-weight:500; margin-bottom:0.35rem;"/>
+                        <h:selectOneMenu id="stud" value="#{reportingBean.selectedStudentId}"
+                                         required="true" style="width:240px;">
+                            <f:ajax listener="#{reportingBean.onStudentChange}" render="yr"/>
+                            <f:selectItem itemLabel="-- Select Student --" itemValue="0"/>
+                            <f:selectItems value="#{reportingBean.students}"
+                                           var="s"
+                                           itemLabel="#{s.studentNumber} – #{s.fullName}"
+                                           itemValue="#{s.studentId}"/>
+                        </h:selectOneMenu>
+                    </div>
+                    <div>
+                        <p:outputLabel for="sem" value="Semester"
+                                       style="display:block; font-weight:500; margin-bottom:0.35rem;"/>
+                        <h:selectOneMenu id="sem" value="#{reportingBean.selectedSemester}"
+                                         style="width:100px;">
+                            <f:selectItem itemLabel="1" itemValue="1"/>
+                            <f:selectItem itemLabel="2" itemValue="2"/>
+                            <f:selectItem itemLabel="3" itemValue="3"/>
+                        </h:selectOneMenu>
+                    </div>
+                    <div>
+                        <p:outputLabel for="yr" value="Year of Study"
+                                       style="display:block; font-weight:500; margin-bottom:0.35rem;"/>
+                        <h:selectOneMenu id="yr" value="#{reportingBean.selectedYear}"
+                                         style="width:120px;">
+                            <f:selectItem itemLabel="Year 1" itemValue="1"/>
+                            <f:selectItem itemLabel="Year 2" itemValue="2"/>
+                            <f:selectItem itemLabel="Year 3" itemValue="3"/>
+                            <f:selectItem itemLabel="Year 4" itemValue="4"/>
+                        </h:selectOneMenu>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:0.5rem;">
+                    <p:commandButton value="Generate Semester Report" icon="pi pi-file"
+                                     action="#{reportingBean.generateSemesterReport}"
+                                     update="reportPanelWrap fullReportWrap reportMsgs"/>
+                    <p:commandButton value="Full Academic Report" icon="pi pi-book"
+                                     action="#{reportingBean.generateFullReport}"
+                                     update="reportPanelWrap fullReportWrap reportMsgs"
+                                     styleClass="ui-button-secondary"/>
+                </div>
+            </p:panel>
+
+            <!-- Semester report output -->
+            <h:panelGroup id="reportPanelWrap" layout="block">
+            <p:panel id="reportPanel" rendered="#{reportingBean.semesterReport != null}"
+                     style="margin-bottom:1rem;">
+                <f:facet name="header">
+                    <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+                        <span><i class="pi pi-file" style="margin-right:0.5rem;"/>Semester Report</span>
+                        <p:commandButton value="Email Report" icon="pi pi-envelope"
+                                         action="#{reportingBean.emailReport}"
+                                         update="reportMsgs"
+                                         styleClass="ui-button-info"
+                                         style="padding:0.3rem 0.8rem; font-size:0.82rem;"/>
+                    </div>
+                </f:facet>
+
+                <div class="report-meta-row">
+                    <div class="report-meta-item">
+                        <div class="rm-label">Student Name</div>
+                        <div class="rm-value">#{reportingBean.semesterReport.student.fullName}</div>
+                    </div>
+                    <div class="report-meta-item">
+                        <div class="rm-label">Student ID</div>
+                        <div class="rm-value">#{reportingBean.semesterReport.student.studentNumber}</div>
+                    </div>
+                    <div class="report-meta-item">
+                        <div class="rm-label">Programme</div>
+                        <div class="rm-value">#{reportingBean.semesterReport.student.program}</div>
+                    </div>
+                    <div class="report-meta-item">
+                        <div class="rm-label">Period</div>
+                        <div class="rm-value">
+                            Semester #{reportingBean.semesterReport.semester},
+                            Year #{reportingBean.semesterReport.yearOfStudy}
+                        </div>
+                    </div>
+                </div>
+
+                <p:dataTable value="#{reportingBean.semesterReport.enrollments}" var="sc"
+                             emptyMessage="No records for this period.">
+                    <f:facet name="header">Course Enrolments</f:facet>
+                    <p:column headerText="Course Code" style="width:120px;">
+                        <strong>#{sc.course.courseCode}</strong>
+                    </p:column>
+                    <p:column headerText="Course Title">#{sc.course.courseTitle}</p:column>
+                    <p:column headerText="Credit Hours" style="width:110px; text-align:center;">
+                        #{sc.course.creditHours}
+                    </p:column>
+                    <p:column headerText="Grade" style="width:70px; text-align:center;">
+                        <strong>#{sc.grade != null ? sc.grade : '&#8211;'}</strong>
+                    </p:column>
+                    <p:column headerText="Grade Point (4.0)" style="width:130px; text-align:center;">
+                        <h:outputText value="#{sc.gradePoint}">
+                            <f:convertNumber maxFractionDigits="2"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Result" style="width:90px;">
+                        <p:tag value="#{sc.passed ? 'Pass' : 'Fail'}"
+                               severity="#{sc.passed ? 'success' : 'danger'}"/>
+                    </p:column>
+                </p:dataTable>
+
+                <p:separator/>
+                <div class="cgpa-block">
+                    <i class="pi pi-chart-line"/>
+                    Cumulative GPA (CGPA):
+                    <strong>
+                        <h:outputText value="#{reportingBean.semesterReport.cgpa}">
+                            <f:convertNumber maxFractionDigits="2"/>
+                        </h:outputText>
+                    </strong>
+                </div>
+            </p:panel>
+            </h:panelGroup>
+
+            <!-- Full academic report -->
+            <h:panelGroup id="fullReportWrap" layout="block">
+            <p:panel id="fullReportPanel"
+                     rendered="#{reportingBean.fullReport != null and not empty reportingBean.fullReport}">
+                <f:facet name="header">
+                    <span><i class="pi pi-book" style="margin-right:0.5rem;"/>Full Academic Report</span>
+                </f:facet>
+
+                <ui:repeat value="#{reportingBean.fullReportEntries}" var="entry">
+                    <div class="semester-heading">#{entry.key}</div>
+                    <p:dataTable value="#{entry.value.enrollments}" var="sc"
+                                 emptyMessage="No records." style="margin-bottom:0.75rem;">
+                        <p:column headerText="Course Code" style="width:120px;">
+                            <strong>#{sc.course.courseCode}</strong>
+                        </p:column>
+                        <p:column headerText="Course Title">#{sc.course.courseTitle}</p:column>
+                        <p:column headerText="Credit Hours" style="width:110px; text-align:center;">
+                            #{sc.course.creditHours}
+                        </p:column>
+                        <p:column headerText="Grade" style="width:70px; text-align:center;">
+                            <strong>#{sc.grade != null ? sc.grade : '&#8211;'}</strong>
+                        </p:column>
+                        <p:column headerText="Grade Point" style="width:110px; text-align:center;">
+                            <h:outputText value="#{sc.gradePoint}">
+                                <f:convertNumber maxFractionDigits="2"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Result" style="width:90px;">
+                            <p:tag value="#{sc.passed ? 'Pass' : 'Fail'}"
+                                   severity="#{sc.passed ? 'success' : 'danger'}"/>
+                        </p:column>
+                    </p:dataTable>
+                    <div class="cgpa-block" style="margin-bottom:0.5rem;">
+                        <i class="pi pi-chart-line"/>
+                        CGPA:
+                        <strong>
+                            <h:outputText value="#{entry.value.cgpa}">
+                                <f:convertNumber maxFractionDigits="2"/>
+                            </h:outputText>
+                        </strong>
+                    </div>
+                    <p:separator/>
+                </ui:repeat>
+            </p:panel>
+            </h:panelGroup>
+
+        </h:form>
+
+    </ui:define>
+</ui:composition>
+</html>

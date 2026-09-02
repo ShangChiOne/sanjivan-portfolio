@@ -510,6 +510,29 @@ section:not(.hero) { padding: 64px 24px; }
   box-shadow: var(--shadow-hover);
 }
 
+.card-wide {
+  grid-column: span 2;
+}
+.card-wide .card-media {
+  aspect-ratio: auto;
+  height: 100%;
+  min-height: 220px;
+}
+.card-wide .card-body {
+  display: flex;
+  flex-direction: column;
+}
+.card-wide-stats {
+  gap: 24px;
+  margin: 4px 0 16px;
+}
+.card-wide-stats strong { font-size: 1.1rem; }
+
+@media (min-width: 720px) {
+  .card-wide { flex-direction: row; }
+  .card-wide .card-media { width: 240px; flex-shrink: 0; }
+}
+
 .tilt-glare {
   position: absolute;
   inset: 0;

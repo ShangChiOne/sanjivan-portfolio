@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:p="http://primefaces.org/ui">
+<ui:composition template="/WEB-INF/templates/main.xhtml">
+
+    <ui:define name="pageTitle">Eligibility Check</ui:define>
+
+    <ui:define name="content">
+
+        <div class="page-header">
+            <div>
+                <h2><i class="pi pi-check-circle"/> Eligibility Check</h2>
+                <p>Review student CGPA and progression eligibility. Min CGPA: 2.00 &#160;&#183;&#160; Max failed courses: 3.</p>
+            </div>
+            <h:form style="margin:0;">
+                <p:commandButton value="Refresh" icon="pi pi-refresh"
+                                 action="#{eligibilityBean.loadLists}"
+                                 update="eligForm" styleClass="ui-button-secondary"/>
+            </h:form>
+        </div>
+
+        <h:form id="eligForm">
+            <p:messages id="eligMsgs" showDetail="true"/>
+
+            <!-- Ineligible students -->
+            <p:panel header="Students NOT Eligible to Progress" style="margin-bottom:1rem;">
+                <p:dataTable value="#{eligibilityBean.ineligibleStudents}" var="s"
+                             emptyMessage="No ineligible students – all students meet progression requirements."
+                             paginator="true" rows="10" paginatorPosition="bottom" stripedRows="true">
+                    <p:column headerText="Student No."><strong>#{s.studentNumber}</strong></p:column>
+                    <p:column headerText="Full Name">#{s.fullName}</p:column>
+                    <p:column headerText="Programme">#{s.program}</p:column>
+                    <p:column headerText="Year" style="text-align:center; width:60px;">#{s.yearOfStudy}</p:column>
+                    <p:column headerText="Actions" style="width:120px;">
+                        <p:commandButton icon="pi pi-search" title="View Eligibility Details"
+                                         action="#{eligibilityBean.checkStudent(s)}"
+                                         update="@form" styleClass="ui-button-info"
+                                         style="margin-right:4px;"/>
+                        <p:commandButton icon="pi pi-envelope" title="Notify Student"
+                                         action="#{eligibilityBean.notifyIneligible(s)}"
+                                         update="eligForm" styleClass="ui-button-warning"/>
+                    </p:column>
+                </p:dataTable>
+            </p:panel>
+
+            <!-- Eligible students -->
+            <p:panel header="Students Eligible to Progress" style="margin-bottom:1rem;">
+                <p:dataTable value="#{eligibilityBean.eligibleStudents}" var="s"
+                             emptyMessage="No eligible students found."
+                             paginator="true" rows="10" paginatorPosition="bottom" stripedRows="true">
+                    <p:column headerText="Student No."><strong>#{s.studentNumber}</strong></p:column>
+                    <p:column headerText="Full Name">#{s.fullName}</p:column>
+                    <p:column headerText="Programme">#{s.program}</p:column>
+                    <p:column headerText="Year" style="text-align:center; width:60px;">#{s.yearOfStudy}</p:column>
+                    <p:column headerText="Actions" style="width:150px;">
+                        <p:commandButton value="#{s.yearOfStudy >= 4 ? 'Graduate' : 'Progress'}"
+                                         icon="#{s.yearOfStudy >= 4 ? 'pi pi-star' : 'pi pi-arrow-circle-right'}"
+                                         action="#{eligibilityBean.prepareProgress(s)}"
+                                         update=":progressDlgPanel" styleClass="ui-button-success"
+                                         oncomplete="PF('progressDlg').show()"/>
+                    </p:column>
+                </p:dataTable>
+            </p:panel>
+
+            <!-- Student eligibility detail -->
+            <h:panelGroup id="checkPanelWrapper" layout="block">
+                <p:panel header="Eligibility Details"
+                         rendered="#{eligibilityBean.selectedStudent != null}"
+                         style="margin-top:1rem;">
+                    <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:1rem;">
+                        <i class="pi pi-user" style="color:#64748b;"/>
+                        <span style="font-weight:600; font-size:0.95rem;">
+                            #{eligibilityBean.selectedStudent.fullName}
+                        </span>
+                        <span style="color:#64748b; font-size:0.85rem;">
+                            &#8211; #{eligibilityBean.selectedStudent.studentNumber}
+                        </span>
+                    </div>
+
+                    <div class="elig-stats-row">
+                        <div class="elig-stat">
+                            <div class="es-label">CGPA</div>
+                            <div class="es-value #{eligibilityBean.cgpa >= 2.0 ? 'good' : 'bad'}">
+                                <h:outputText value="#{eligibilityBean.cgpa}">
+                                    <f:convertNumber maxFractionDigits="2"/>
+                                </h:outputText>
+                            </div>
+                        </div>
+                        <div class="elig-stat">
+                            <div class="es-label">Failed Courses</div>
+                            <div class="es-value #{eligibilityBean.failedCount > 3 ? 'bad' : eligibilityBean.failedCount > 0 ? 'warn' : 'good'}">
+                                #{eligibilityBean.failedCount}
+                            </div>
+                        </div>
+                        <div class="elig-stat">
+                            <div class="es-label">Min CGPA Required</div>
+                            <div class="es-value" style="font-size:1.1rem; color:#0f172a;">2.00</div>
+                        </div>
+                        <div class="elig-stat">
+                            <div class="es-label">Max Failed Allowed</div>
+                            <div class="es-value" style="font-size:1.1rem; color:#0f172a;">3</div>
+                        </div>
+                    </div>
+                </p:panel>
+            </h:panelGroup>
+
+        </h:form>
+
+        <!-- Progression confirmation dialog — outside eligForm to avoid naming container lookup issues -->
+        <h:panelGroup id="progressDlgPanel" layout="block">
+            <p:dialog widgetVar="progressDlg" modal="true" resizable="false"
+                      header="Confirm Progression" width="420" closeOnEscape="true">
+                <div style="padding:1rem; text-align:center;">
+                    <i class="pi pi-arrow-circle-right"
+                       style="font-size:2.5rem; color:#22c55e; margin-bottom:0.75rem; display:block;"/>
+                    <p style="font-size:1rem; margin:0 0 1.5rem 0;">
+                        Progress <strong>#{eligibilityBean.confirmStudentName}</strong> to the next year of study?
+                    </p>
+                    <h:form style="display:inline-flex; gap:0.5rem; justify-content:center;">
+                        <p:commandButton value="Yes, Progress" icon="pi pi-check"
+                                         styleClass="ui-button-success"
+                                         action="#{eligibilityBean.progressStudent(eligibilityBean.confirmStudentId)}"
+                                         update=":eligForm"
+                                         oncomplete="PF('progressDlg').hide()"/>
+                        <p:commandButton value="Cancel" icon="pi pi-times"
+                                         type="button" styleClass="ui-button-secondary"
+                                         onclick="PF('progressDlg').hide()"/>
+                    </h:form>
+                </div>
+            </p:dialog>
+        </h:panelGroup>
+
+    </ui:define>
+</ui:composition>
+</html>

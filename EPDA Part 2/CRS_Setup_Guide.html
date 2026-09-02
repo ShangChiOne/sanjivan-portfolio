@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CRS – Setup Guide</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 13px;
+      color: #222;
+      background: #fff;
+      padding: 40px 60px;
+      max-width: 860px;
+      margin: auto;
+    }
+    h1 { font-size: 22px; color: #1a1a2e; border-bottom: 3px solid #1a1a2e; padding-bottom: 8px; margin-bottom: 6px; }
+    .subtitle { font-size: 12px; color: #555; margin-bottom: 30px; }
+    h2 { font-size: 15px; color: #fff; background: #1a1a2e; padding: 7px 12px; margin: 28px 0 10px; border-radius: 4px; }
+    h3 { font-size: 13px; color: #1a1a2e; margin: 16px 0 6px; font-weight: bold; }
+    p { margin-bottom: 8px; line-height: 1.6; }
+    ul, ol { margin: 6px 0 10px 22px; line-height: 1.8; }
+    li { margin-bottom: 3px; }
+    code {
+      background: #f0f0f0;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-family: Consolas, monospace;
+      font-size: 12px;
+    }
+    pre {
+      background: #1e1e1e;
+      color: #dcdcdc;
+      padding: 12px 16px;
+      border-radius: 5px;
+      margin: 8px 0 12px;
+      font-family: Consolas, monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .box {
+      border: 1px solid #c8d8e8;
+      background: #eef5fb;
+      border-radius: 5px;
+      padding: 10px 14px;
+      margin: 10px 0;
+    }
+    .warn {
+      border: 1px solid #f5c518;
+      background: #fffbe6;
+      border-radius: 5px;
+      padding: 10px 14px;
+      margin: 10px 0;
+    }
+    .success {
+      border: 1px solid #4caf50;
+      background: #f0fdf0;
+      border-radius: 5px;
+      padding: 10px 14px;
+      margin: 10px 0;
+    }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    th { background: #1a1a2e; color: #fff; padding: 7px 10px; text-align: left; font-size: 12px; }
+    td { padding: 6px 10px; border-bottom: 1px solid #ddd; font-size: 12px; }
+    tr:nth-child(even) td { background: #f9f9f9; }
+    .step-num {
+      display: inline-block;
+      background: #1a1a2e;
+      color: #fff;
+      border-radius: 50%;
+      width: 22px; height: 22px;
+      text-align: center;
+      line-height: 22px;
+      font-size: 11px;
+      font-weight: bold;
+      margin-right: 6px;
+    }
+    .toc { background: #f7f7f7; border: 1px solid #ddd; padding: 14px 20px; border-radius: 5px; margin-bottom: 28px; }
+    .toc h3 { margin-bottom: 8px; }
+    .toc ol { margin-left: 18px; }
+    .toc li { margin-bottom: 2px; }
+    @media print {
+      body { padding: 20px 30px; }
+      h2 { page-break-after: avoid; }
+      pre { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<h1>Course Recovery System (CRS)</h1>
+<p class="subtitle">Step-by-Step Setup Guide &nbsp;|&nbsp; CT027-3-3-EPDA &nbsp;|&nbsp; Asia Pacific University</p>
+
+<div class="toc">
+  <h3>Table of Contents</h3>
+  <ol>
+    <li>What You Need (Prerequisites)</li>
+    <li>Install the Software</li>
+    <li>Set Up the Database</li>
+    <li>Configure GlassFish</li>
+    <li>Build &amp; Deploy the Application</li>
+    <li>Log In and Use the System</li>
+    <li>Troubleshooting</li>
+  </ol>
+</div>
+
+
+<!-- ===== SECTION 1 ===== -->
+<h2>1 &nbsp; What You Need (Prerequisites)</h2>
+<p>Before you start, make sure you have the following:</p>
+<table>
+  <tr><th>Software</th><th>Version</th><th>What it's for</th></tr>
+  <tr><td>Java JDK</td><td>17 or newer</td><td>Runs the application</td></tr>
+  <tr><td>GlassFish Server</td><td>7.x (Jakarta EE 10)</td><td>Application server</td></tr>
+  <tr><td>MySQL Server</td><td>8.x</td><td>Database</td></tr>
+  <tr><td>MySQL Connector/J</td><td>8.x or 9.x</td><td>Lets GlassFish talk to MySQL</td></tr>
+  <tr><td>Apache Maven</td><td>3.8+</td><td>Builds the project</td></tr>
+</table>
+<div class="box">
+  <strong>Quick version check:</strong> Open Command Prompt and run these to confirm everything is installed:<br><br>
+  <code>java -version</code> &nbsp;&nbsp; <code>mvn -version</code>
+</div>
+
+
+<!-- ===== SECTION 2 ===== -->
+<h2>2 &nbsp; Install the Software</h2>
+
+<h3><span class="step-num">A</span> Java JDK 17</h3>
+<ol>
+  <li>Download <strong>JDK 17</strong> (or newer) from Oracle or Adoptium (search "JDK 17 download").</li>
+  <li>Run the installer and follow the prompts.</li>
+  <li>After install, open Command Prompt and type <code>java -version</code> — you should see a version number.</li>
+</ol>
+
+<h3><span class="step-num">B</span> Apache Maven</h3>
+<ol>
+  <li>Download the <strong>Binary zip</strong> from maven.apache.org.</li>
+  <li>Extract it (e.g., to <code>C:\maven</code>).</li>
+  <li>Add <code>C:\maven\bin</code> to your system's PATH environment variable.</li>
+  <li>Open a new Command Prompt and type <code>mvn -version</code> to confirm.</li>
+</ol>
+
+<h3><span class="step-num">C</span> MySQL Server 8</h3>
+<ol>
+  <li>Download <strong>MySQL Installer</strong> from mysql.com.</li>
+  <li>Run the installer — choose <em>Developer Default</em> or at minimum just <em>MySQL Server</em>.</li>
+  <li>During setup, set a <strong>root password</strong> — remember this, you will need it later.</li>
+  <li>Leave the port as the default: <strong>3306</strong>.</li>
+</ol>
+
+<h3><span class="step-num">D</span> GlassFish 7</h3>
+<ol>
+  <li>Go to <strong>glassfish.org</strong> and download <strong>GlassFish 7.x</strong> (the zip file).</li>
+  <li>Extract it anywhere you like, e.g., <code>C:\glassfish7</code>.</li>
+  <li>You do NOT need to run an installer — just extract and it's ready.</li>
+</ol>
+
+<h3><span class="step-num">E</span> MySQL Connector/J</h3>
+<ol>
+  <li>Go to <strong>dev.mysql.com/downloads/connector/j/</strong> and download the <em>Platform Independent</em> zip.</li>
+  <li>Extract it — you only need the <code>.jar</code> file inside (e.g., <code>mysql-connector-j-8.x.x.jar</code>).</li>
+  <li>Copy that <code>.jar</code> file into:<br>
+    <pre>C:\glassfish7\glassfish\domains\domain1\lib\</pre>
+    <em>(Create the <code>lib</code> folder if it does not exist.)</em>
+  </li>
+</ol>
+
+
+<!-- ===== SECTION 3 ===== -->
+<h2>3 &nbsp; Set Up the Database</h2>
+
+<h3><span class="step-num">1</span> Open MySQL Command Line</h3>
+<p>Open Command Prompt and connect to MySQL:</p>
+<pre>mysql -u root -p</pre>
+<p>Enter your root password when prompted.</p>
+
+<h3><span class="step-num">2</span> Run the Schema Script</h3>
+<p>Navigate to the project's <code>database</code> folder, then run:</p>
+<pre>source C:/path/to/CourseRecoverySystem/database/crs_schema.sql</pre>
+<div class="box">
+  Replace <code>C:/path/to/</code> with the actual path where you placed the project.<br>
+  Use <strong>forward slashes</strong> ( / ) even on Windows inside the MySQL prompt.
+</div>
+<p>This will create the database <code>crs_db</code> and all tables, and insert default accounts and sample data.</p>
+
+<h3><span class="step-num">3</span> Run the Enrolments Seed (Optional)</h3>
+<p>To load sample student grades for testing:</p>
+<pre>source C:/path/to/CourseRecoverySystem/database/enrollments_seed.sql</pre>
+
+<h3><span class="step-num">4</span> Verify</h3>
+<pre>USE crs_db;
+SHOW TABLES;</pre>
+<p>You should see tables like <code>users</code>, <code>students</code>, <code>courses</code>, <code>recovery_plans</code>, etc.</p>
+
+
+<!-- ===== SECTION 4 ===== -->
+<h2>4 &nbsp; Configure GlassFish</h2>
+
+<h3><span class="step-num">1</span> Start GlassFish</h3>
+<p>Open Command Prompt and run:</p>
+<pre>C:\glassfish7\bin\asadmin start-domain</pre>
+<p>Wait until you see: <em>"Command start-domain executed successfully."</em></p>
+
+<h3><span class="step-num">2</span> Open the Admin Console</h3>
+<p>Open your browser and go to:</p>
+<pre>http://localhost:4848</pre>
+<p>Log in with username <code>admin</code> and leave the password blank (default), or use whatever you set during GlassFish setup.</p>
+
+<h3><span class="step-num">3</span> Create a JDBC Connection Pool</h3>
+<ol>
+  <li>In the left panel, go to: <strong>Resources → JDBC → Connection Pools</strong></li>
+  <li>Click <strong>New</strong></li>
+  <li>Fill in:
+    <table>
+      <tr><th>Field</th><th>Value</th></tr>
+      <tr><td>Pool Name</td><td><code>CRSPool</code></td></tr>
+      <tr><td>Resource Type</td><td><code>javax.sql.DataSource</code></td></tr>
+      <tr><td>Database Driver Vendor</td><td><code>MySql</code></td></tr>
+    </table>
+  </li>
+  <li>Click <strong>Next</strong></li>
+  <li>Scroll down to <strong>Additional Properties</strong> and add these properties:
+    <table>
+      <tr><th>Name</th><th>Value</th></tr>
+      <tr><td>url</td><td><code>jdbc:mysql://localhost:3306/crs_db</code></td></tr>
+      <tr><td>user</td><td><code>root</code></td></tr>
+      <tr><td>password</td><td><em>your MySQL root password</em></td></tr>
+      <tr><td>useSSL</td><td><code>false</code></td></tr>
+      <tr><td>allowPublicKeyRetrieval</td><td><code>true</code></td></tr>
+    </table>
+  </li>
+  <li>Click <strong>Finish</strong></li>
+  <li>Click on <strong>CRSPool</strong> → click <strong>Ping</strong> to test — you should see <em>"Ping Succeeded"</em></li>
+</ol>
+
+<div class="warn">
+  <strong>Ping failed?</strong> Make sure MySQL is running and the mysql-connector-j jar is in the <code>lib</code> folder. Restart GlassFish and try again.
+</div>
+
+<h3><span class="step-num">4</span> Create a JDBC Resource</h3>
+<ol>
+  <li>Go to: <strong>Resources → JDBC → JDBC Resources</strong></li>
+  <li>Click <strong>New</strong></li>
+  <li>Fill in:
+    <table>
+      <tr><th>Field</th><th>Value</th></tr>
+      <tr><td>JNDI Name</td><td><code>jdbc/CRSDS</code></td></tr>
+      <tr><td>Pool Name</td><td><code>CRSPool</code></td></tr>
+    </table>
+  </li>
+  <li>Click <strong>OK</strong></li>
+</ol>
+
+
+<!-- ===== SECTION 5 ===== -->
+<h2>5 &nbsp; Build &amp; Deploy the Application</h2>
+
+<h3><span class="step-num">1</span> Build the Project</h3>
+<p>Open Command Prompt, navigate to the project root folder (where <code>pom.xml</code> is), and run:</p>
+<pre>cd C:\path\to\CourseRecoverySystem
+mvn clean package</pre>
+<p>This will compile the code and produce the EAR file. Wait until you see <strong>BUILD SUCCESS</strong>.</p>
+
+<h3><span class="step-num">2</span> Find the EAR File</h3>
+<p>After a successful build, the EAR file is located at:</p>
+<pre>CourseRecoverySystem\CRS-ear\target\CRS-ear-1.0.ear</pre>
+
+<h3><span class="step-num">3</span> Deploy to GlassFish</h3>
+<p>You have two options:</p>
+
+<p><strong>Option A — Drag &amp; Drop (easiest):</strong></p>
+<p>Copy the <code>CRS-ear-1.0.ear</code> file into:</p>
+<pre>C:\glassfish7\glassfish\domains\domain1\autodeploy\</pre>
+<p>GlassFish will automatically detect and deploy it. Wait about 10–15 seconds.</p>
+
+<p><strong>Option B — Admin Console:</strong></p>
+<ol>
+  <li>Go to <code>http://localhost:4848</code></li>
+  <li>Left panel → <strong>Applications</strong></li>
+  <li>Click <strong>Deploy</strong></li>
+  <li>Click <strong>Choose File</strong> → select <code>CRS-ear-1.0.ear</code></li>
+  <li>Click <strong>OK</strong></li>
+</ol>
+
+<div class="success">
+  <strong>Deployed successfully?</strong> You should see <code>CRS-ear</code> listed under Applications with status <em>Enabled</em>.
+</div>
+
+
+<!-- ===== SECTION 6 ===== -->
+<h2>6 &nbsp; Log In and Use the System</h2>
+
+<h3>Open the Application</h3>
+<p>Open your browser and go to:</p>
+<pre>http://localhost:8080/CRS</pre>
+
+<h3>Default Login Accounts</h3>
+<table>
+  <tr><th>Role</th><th>Username</th><th>Password</th></tr>
+  <tr><td>Course Administrator</td><td><code>admin</code></td><td><code>Admin@123</code></td></tr>
+  <tr><td>Academic Officer</td><td><code>officer</code></td><td><code>Officer@123</code></td></tr>
+</table>
+
+<h3>What each role can do</h3>
+<table>
+  <tr><th>Feature</th><th>Course Admin</th><th>Academic Officer</th></tr>
+  <tr><td>User Management</td><td>Yes</td><td>Yes</td></tr>
+  <tr><td>Eligibility Check &amp; Enrolment</td><td>Yes</td><td>Yes</td></tr>
+  <tr><td>Academic Performance Reporting</td><td>Yes</td><td>Yes</td></tr>
+  <tr><td>Course Recovery Plan</td><td>Yes</td><td>Yes</td></tr>
+</table>
+
+
+<!-- ===== SECTION 7 ===== -->
+<h2>7 &nbsp; Troubleshooting</h2>
+
+<table>
+  <tr><th>Problem</th><th>Fix</th></tr>
+  <tr>
+    <td>Page not found at <code>localhost:8080/CRS</code></td>
+    <td>Make sure GlassFish is running and the EAR is deployed. Check <code>localhost:4848</code> → Applications.</td>
+  </tr>
+  <tr>
+    <td>Ping failed on CRSPool</td>
+    <td>Check MySQL is running. Confirm the <code>mysql-connector-j</code> jar is in <code>domain1/lib/</code>. Restart GlassFish.</td>
+  </tr>
+  <tr>
+    <td>BUILD FAILURE during <code>mvn package</code></td>
+    <td>Make sure JDK 17+ is installed and <code>JAVA_HOME</code> is set. Run <code>java -version</code> to verify.</td>
+  </tr>
+  <tr>
+    <td>Login fails with correct password</td>
+    <td>Make sure <code>crs_schema.sql</code> was run successfully and the <code>users</code> table has records.</td>
+  </tr>
+  <tr>
+    <td>GlassFish won't start — port in use</td>
+    <td>Another program may be using port 8080 or 4848. Stop it, or change GlassFish's HTTP port in the Admin Console.</td>
+  </tr>
+  <tr>
+    <td>Database connection error in app</td>
+    <td>Verify the JNDI name is exactly <code>jdbc/CRSDS</code> and the pool name is <code>CRSPool</code>.</td>
+  </tr>
+</table>
+
+<br>
+<div class="box">
+  <strong>To stop GlassFish</strong> when you're done:<br>
+  <pre style="margin:6px 0 0">C:\glassfish7\bin\asadmin stop-domain</pre>
+</div>
+
+<br><br>
+<p style="text-align:center; color:#888; font-size:11px;">CT027-3-3-EPDA &nbsp;|&nbsp; Course Recovery System &nbsp;|&nbsp; Asia Pacific University of Technology and Innovation</p>
+
+</body>
+</html>

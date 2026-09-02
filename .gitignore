@@ -16,3 +16,17 @@ __pycache__/
 /*.jpg
 /*.jpeg
 /*.png
+
+# EPDA Part 2 (Course Recovery System) — Eclipse workspace state, build output,
+# zipped backups, and unrelated personal files, kept out of the portfolio repo
+EPDA Part 2/.metadata/
+EPDA Part 2/Backup/
+EPDA Part 2/Year 3/
+EPDA Part 2/.claude/
+EPDA Part 2/CourseRecoverySystem/*/target/
+EPDA Part 2/CourseRecoverySystem/target/
+
+# University-issued assignment brief & marking scheme — not the student's own work,
+# excluded to avoid giving future cohorts access to the brief/marking criteria
+EPDA Part 2/2511-CT027-3-3_EPDA_Assignment-MS.pdf
+EPDA Part 2/2511-CT027-3-3_EPDA_Assignment-Question.pdf

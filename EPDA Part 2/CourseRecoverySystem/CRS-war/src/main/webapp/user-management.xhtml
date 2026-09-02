@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:p="http://primefaces.org/ui">
+<ui:composition template="/WEB-INF/templates/main.xhtml">
+
+    <ui:define name="pageTitle">User Management</ui:define>
+
+    <ui:define name="content">
+
+        <div class="page-header">
+            <div>
+                <h2><i class="pi pi-users"/> User Management</h2>
+                <p>Create and manage system user accounts and access roles.</p>
+            </div>
+        </div>
+
+        <!-- Create new user -->
+        <p:panel header="Create New User Account" toggleable="true" style="margin-bottom:1rem;">
+            <h:form id="createForm">
+                <p:messages id="createMsgs" showDetail="true"/>
+
+                <div style="display:grid; grid-template-columns:150px 320px; gap:0.6rem 1rem;
+                            align-items:center; margin-bottom:1rem;">
+                    <p:outputLabel for="uname" value="Username *" style="font-weight:500;"/>
+                    <p:inputText id="uname" value="#{userManagementBean.newUser.username}"
+                                 required="true" style="width:320px;" placeholder="e.g. jsmith"/>
+
+                    <p:outputLabel for="fname" value="Full Name *" style="font-weight:500;"/>
+                    <p:inputText id="fname" value="#{userManagementBean.newUser.fullName}"
+                                 required="true" style="width:320px;"/>
+
+                    <p:outputLabel for="email" value="Email *" style="font-weight:500;"/>
+                    <p:inputText id="email" value="#{userManagementBean.newUser.email}"
+                                 required="true" style="width:320px;"/>
+
+                    <p:outputLabel for="role" value="Role *" style="font-weight:500;"/>
+                    <h:selectOneMenu id="role" value="#{userManagementBean.newUser.role}"
+                                     required="true" style="width:320px;">
+                        <f:selectItem itemLabel="-- Select --" itemValue=""/>
+                        <f:selectItem itemLabel="Course Administrator" itemValue="COURSE_ADMIN"/>
+                        <f:selectItem itemLabel="Academic Officer"     itemValue="ACADEMIC_OFFICER"/>
+                    </h:selectOneMenu>
+
+                    <p:outputLabel for="pass" value="Password *" style="font-weight:500;"/>
+                    <p:password id="pass" value="#{userManagementBean.newPassword}"
+                                required="true" feedback="true" style="width:320px;"/>
+                </div>
+
+                <p:commandButton value="Create User" icon="pi pi-plus"
+                                 action="#{userManagementBean.createUser}"
+                                 update="createForm :usersTableForm:usersTable createMsgs"
+                                 styleClass="ui-button-success"/>
+            </h:form>
+        </p:panel>
+
+        <!-- Users table -->
+        <h:form id="usersTableForm">
+            <p:messages id="tableMsgs" showDetail="true"/>
+            <div style="display:flex; justify-content:flex-end; margin-bottom:0.5rem;">
+                <p:commandButton value="Refresh" icon="pi pi-refresh"
+                                 action="#{userManagementBean.refresh}"
+                                 update="usersTable tableMsgs"
+                                 styleClass="ui-button-secondary"/>
+            </div>
+            <p:dataTable id="usersTable" value="#{userManagementBean.users}" var="u"
+                         paginator="true" rows="10" stripedRows="true" paginatorPosition="bottom"
+                         emptyMessage="No users found.">
+                <f:facet name="header">System Users</f:facet>
+
+                <p:column headerText="Username"><strong>#{u.username}</strong></p:column>
+                <p:column headerText="Full Name">#{u.fullName}</p:column>
+                <p:column headerText="Email">#{u.email}</p:column>
+                <p:column headerText="Role">
+                    <p:tag value="#{u.role == 'COURSE_ADMIN' ? 'Course Admin' : 'Academic Officer'}"
+                           severity="#{u.role == 'COURSE_ADMIN' ? 'info' : 'success'}"/>
+                </p:column>
+                <p:column headerText="Status">
+                    <p:tag value="#{u.active ? 'Active' : 'Inactive'}"
+                           severity="#{u.active ? 'success' : 'danger'}"/>
+                </p:column>
+                <p:column headerText="Actions" style="width:150px;">
+                    <p:commandButton icon="pi pi-pencil" title="Edit User"
+                                     action="#{userManagementBean.selectUser(u)}"
+                                     update=":editUserDialog" styleClass="ui-button-info"
+                                     style="margin-right:4px;"
+                                     oncomplete="PF('editUserDlg').show()"/>
+                    <p:commandButton icon="pi pi-lock" title="Reset Password"
+                                     action="#{userManagementBean.resetPassword(u.userId)}"
+                                     update="usersTable tableMsgs"
+                                     styleClass="ui-button-warning" style="margin-right:4px;"/>
+                    <p:commandButton icon="pi pi-ban" title="Deactivate"
+                                     action="#{userManagementBean.deactivateUser(u.userId)}"
+                                     update="usersTable tableMsgs"
+                                     styleClass="ui-button-danger"
+                                     rendered="#{u.active}">
+                        <p:confirm header="Confirm" message="Deactivate #{u.fullName}?"/>
+                    </p:commandButton>
+                </p:column>
+            </p:dataTable>
+
+            <p:confirmDialog global="true" widgetVar="confirmDlgUsers"
+                             modal="true" responsive="true" width="380">
+                <p:commandButton value="Yes" type="button"
+                                 styleClass="ui-button-danger ui-confirmdialog-yes"/>
+                <p:commandButton value="No"  type="button"
+                                 styleClass="ui-button-secondary ui-confirmdialog-no"/>
+            </p:confirmDialog>
+        </h:form>
+
+        <!-- Edit User dialog -->
+        <h:panelGroup id="editUserDialog" layout="block">
+            <p:dialog header="Edit User" widgetVar="editUserDlg" modal="true"
+                      resizable="false" width="460"
+                      rendered="#{userManagementBean.selectedUser != null}">
+                <h:form id="editUserForm">
+                    <p:messages id="editUserMsgs" showDetail="true"/>
+                    <div style="display:grid; grid-template-columns:130px 1fr; gap:0.6rem 1rem;
+                                align-items:center; margin-bottom:1rem;">
+                        <p:outputLabel value="Full Name *" style="font-weight:500;"/>
+                        <p:inputText value="#{userManagementBean.selectedUser.fullName}"
+                                     required="true" style="width:100%;"/>
+
+                        <p:outputLabel value="Email *" style="font-weight:500;"/>
+                        <p:inputText value="#{userManagementBean.selectedUser.email}"
+                                     required="true" style="width:100%;"/>
+
+                        <p:outputLabel value="Role *" style="font-weight:500;"/>
+                        <h:selectOneMenu value="#{userManagementBean.selectedUser.role}"
+                                         required="true" style="width:100%;">
+                            <f:selectItem itemLabel="Course Administrator" itemValue="COURSE_ADMIN"/>
+                            <f:selectItem itemLabel="Academic Officer"     itemValue="ACADEMIC_OFFICER"/>
+                        </h:selectOneMenu>
+                    </div>
+                    <div style="display:flex; gap:0.5rem;">
+                        <p:commandButton value="Save Changes" icon="pi pi-save"
+                                         action="#{userManagementBean.updateUser}"
+                                         update=":usersTableForm:usersTable editUserMsgs"
+                                         oncomplete="if (!args.validationFailed) PF('editUserDlg').hide()"
+                                         styleClass="ui-button-success"/>
+                        <p:commandButton value="Cancel" icon="pi pi-times"
+                                         type="button" styleClass="ui-button-secondary"
+                                         onclick="PF('editUserDlg').hide()"/>
+                    </div>
+                </h:form>
+            </p:dialog>
+        </h:panelGroup>
+
+    </ui:define>
+</ui:composition>
+</html>
