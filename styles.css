@@ -489,7 +489,8 @@ section:not(.hero) { padding: 64px 24px; }
 
 .project-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+  grid-auto-flow: dense;
   gap: 24px;
 }
 
@@ -890,6 +891,9 @@ section:not(.hero) { padding: 64px 24px; }
 
   .featured-project { grid-template-columns: 1fr; }
   .featured-body { padding: 28px 24px; }
+
+  .project-grid { grid-template-columns: 1fr; }
+  .card-wide { grid-column: auto; }
 }
 
 @media (prefers-reduced-motion: reduce) {

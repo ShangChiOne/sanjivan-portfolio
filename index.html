@@ -189,6 +189,37 @@
         </div>
       </article>
 
+      <article class="card card-wide">
+        <a class="card-media card-media-link" href="https://stock-portfolio-backtester.vercel.app" target="_blank" rel="noopener" aria-label="Open Stock Portfolio Analyzer &amp; Backtester live demo">
+          <img src="assets/images/stock-analyzer.png" alt="Stock Portfolio Analyzer comparison report showing SMA Crossover, RSI Momentum, Buy &amp; Hold, and SPY equity curves" loading="lazy">
+          <span class="play-badge">↗ Open live demo</span>
+        </a>
+        <div class="card-body">
+          <span class="tag">FastAPI · React · Python</span>
+          <h3>Stock Portfolio Analyzer &amp; Backtester</h3>
+          <p>A custom-built backtesting engine, no backtrader, vectorbt, or zipline, served through
+            a FastAPI backend and a React frontend. The engine is structurally prevented from
+            lookahead bias: strategies only ever receive a real slice of price history up to the
+            current rebalance date, never a reference to the full dataset. Covers an SMA crossover
+            and an RSI mean-reversion strategy against a buy-and-hold baseline, a full risk/performance
+            metrics suite (Sharpe, Sortino, max drawdown, beta), pluggable transaction cost models, and
+            walk-forward validation across multiple time windows. Live at
+            <a href="https://stock-portfolio-backtester.vercel.app" target="_blank" rel="noopener">stock-portfolio-backtester.vercel.app</a>,
+            with CI running the full test and build suite on every push.</p>
+
+          <ul class="featured-stats card-wide-stats">
+            <li><strong data-count="52">0</strong><span>tests passing</span></li>
+            <li><strong data-count="2">0</strong><span>strategies + baseline</span></li>
+            <li><strong data-count="4">0</strong><span>frontend views</span></li>
+          </ul>
+
+          <ul class="stack-row" aria-label="Tech stack">
+            <li>Python · pandas</li><li>FastAPI</li><li>React · TypeScript</li>
+            <li>Tailwind · shadcn/ui</li><li>Recharts</li><li>pytest</li><li>GitHub Actions CI</li>
+          </ul>
+        </div>
+      </article>
+
       <article class="card">
         <button class="card-media" data-video="8JN9GsUkDZY" aria-label="Play Dragon's Ring demo video">
           <img src="assets/images/dragons-ring.jpg" alt="Dragon's Ring Kickboxing Tournament title screen" loading="lazy">

@@ -240,6 +240,7 @@ const commands = [
   { label: 'Contact', hint: 'Section', action: () => scrollToId('contact') },
   { label: 'ForecastIQ — Final Year Project', hint: 'Project', action: () => scrollToId('projects') },
   { label: 'SavePlus+', hint: 'Project', action: () => scrollToId('projects') },
+  { label: 'Stock Portfolio Analyzer & Backtester', hint: 'Open site', action: () => window.open('https://stock-portfolio-backtester.vercel.app', '_blank', 'noopener') },
   { label: "Dragon's Ring Kickboxing Tournament", hint: 'Project', action: () => scrollToId('projects') },
   { label: 'Insurance Premium Prediction', hint: 'Project', action: () => scrollToId('projects') },
   { label: 'Thiyages & Co Law Firm', hint: 'Open site', action: () => window.open('https://thiyagesco.com', '_blank', 'noopener') },
