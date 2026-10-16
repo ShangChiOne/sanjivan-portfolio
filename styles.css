@@ -553,6 +553,9 @@ section:not(.hero) { padding: 64px 24px; }
   object-fit: cover;
 }
 .card-media-link { cursor: pointer; }
+/* Charts must stay whole, so letterbox on the chart's own background */
+.card-media-chart { background: #fcfcfb; }
+.card-media-chart img { object-fit: contain; }
 
 .media-placeholder {
   width: 100%;
